@@ -10,12 +10,12 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 -->
 
-[![Version](https://img.shields.io/npm/v/@CNA/aio-lib-core-networking.svg)](https://npmjs.org/package/@CNA/aio-lib-core-networking)
-[![Downloads/week](https://img.shields.io/npm/dw/@CNA/aio-lib-core-networking.svg)](https://npmjs.org/package/@CNA/aio-lib-core-networking)
-[![Build Status](https://travis-ci.com/CNA/aio-lib-core-networking.svg?branch=master)](https://travis-ci.com/CNA/aio-lib-core-networking)
+[![Version](https://img.shields.io/npm/v/@adobe/aio-lib-core-networking.svg)](https://npmjs.org/package/@adobe/aio-lib-core-networking)
+[![Downloads/week](https://img.shields.io/npm/dw/@adobe/aio-lib-core-networking.svg)](https://npmjs.org/package/@adobe/aio-lib-core-networking)
+[![Build Status](https://travis-ci.com/adobe/aio-lib-core-networking.svg?branch=master)](https://travis-ci.com/adobe/aio-lib-core-networking)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
-[![Greenkeeper badge](https://badges.greenkeeper.io/CNA/aio-lib-core-networking.svg)](https://greenkeeper.io/)
-[![Codecov Coverage](https://img.shields.io/codecov/c/github/CNA/aio-lib-core-networking/master.svg?style=flat-square)](https://codecov.io/gh/CNA/aio-lib-core-networking/)
+[![Greenkeeper badge](https://badges.greenkeeper.io/adobe/aio-lib-core-networking.svg)](https://greenkeeper.io/)
+[![Codecov Coverage](https://img.shields.io/codecov/c/github/adobe/aio-lib-core-networking/master.svg?style=flat-square)](https://codecov.io/gh/adobe/aio-lib-core-networking/)
 
 # Adobe I/O Core Networking Lib
 
