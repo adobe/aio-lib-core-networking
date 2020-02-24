@@ -39,7 +39,7 @@ class HttpExponentialBackoff {
    * @returns {Promise<Response>} Promise object representing the http response
    */
   async exponentialBackoff (url, requestOptions, retryOptions = {},
-    retryOn, retryDelay) {
+    retryOn = undefined, retryDelay = undefined) {
     const {
       maxRetries = DEFAULT_MAX_RETRIES,
       initialDelayInMillis = DEFAULY_INITIAL_DELAY_MS
