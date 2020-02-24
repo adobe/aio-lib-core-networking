@@ -50,5 +50,5 @@
     "typings": "jsdoc -t node_modules/tsd-jsdoc/dist -r src/*.js -d .",
     "unit-tests": "jest --config test/jest.config.js --maxWorkers=2"
   },
-  "version": "0.0.1"
+  "version": "1.0.0"
 }
