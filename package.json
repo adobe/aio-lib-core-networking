@@ -34,7 +34,7 @@
     "stdout-stderr": "^0.1.9",
     "tsd-jsdoc": "^2.4.0",
     "node-fetch": "^2.6.0",
-    "fetch-mock": "^8.3.2"
+    "fetch-mock": "^9.0.0"
   },
   "homepage": "https://github.com/adobe/aio-lib-core-networking",
   "license": "Apache-2.0",
