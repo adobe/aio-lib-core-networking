@@ -21,6 +21,8 @@ const logger = require('@adobe/aio-lib-core-logging')(
 const originalFetch = require('node-fetch')
 const fetch = require('fetch-retry')(originalFetch)
 
+/* global Response */ // for linter
+
 /**
  * This class provides methods to implement fetch with retries.
  * The retries use exponential backoff strategy

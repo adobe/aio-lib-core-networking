@@ -4,6 +4,7 @@
   },
   "bundleDependencies": false,
   "dependencies": {
+    "node-fetch": "^2.6.0",
     "@adobe/aio-lib-core-errors": "^3.0.0",
     "@adobe/aio-lib-core-logging": "1.1.0",
     "fetch-retry": "^3.0.1"
@@ -11,7 +12,7 @@
   "deprecated": false,
   "description": "Adobe I/O Lib Core Networking",
   "devDependencies": {
-    "@adobe/eslint-config-aio-lib-config": "^1.1.0",
+    "@adobe/eslint-config-aio-lib-config": "^1.2.0",
     "babel-runtime": "^6.26.0",
     "codecov": "^3.5.0",
     "dotenv": "^8.1.0",
@@ -33,7 +34,6 @@
     "openapi-schema-validator": "^3.0.3",
     "stdout-stderr": "^0.1.9",
     "tsd-jsdoc": "^2.4.0",
-    "node-fetch": "^2.6.0",
     "fetch-mock": "^9.0.0"
   },
   "homepage": "https://github.com/adobe/aio-lib-core-networking",
