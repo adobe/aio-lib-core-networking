@@ -1,5 +1,5 @@
 <!--
-Copyright 2019 Adobe. All rights reserved.
+Copyright 2021 Adobe. All rights reserved.
 This file is licensed to you under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License. You may obtain a copy
 of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -10,13 +10,21 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 -->
 
-[![Version](https://img.shields.io/npm/v/@CNA/aio-lib-core-networking.svg)](https://npmjs.org/package/@CNA/aio-lib-core-networking)
-[![Downloads/week](https://img.shields.io/npm/dw/@CNA/aio-lib-core-networking.svg)](https://npmjs.org/package/@CNA/aio-lib-core-networking)
-[![Build Status](https://travis-ci.com/CNA/aio-lib-core-networking.svg?branch=master)](https://travis-ci.com/CNA/aio-lib-core-networking)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![Greenkeeper badge](https://badges.greenkeeper.io/CNA/aio-lib-core-networking.svg)](https://greenkeeper.io/)
-[![Codecov Coverage](https://img.shields.io/codecov/c/github/CNA/aio-lib-core-networking/master.svg?style=flat-square)](https://codecov.io/gh/CNA/aio-lib-core-networking/)
+<!--
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+DO NOT update README.md, it is generated.
+Modify 'docs/readme_template.md', then run `npm run generate-docs`.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+-->
 
-# Adobe I/O ??? Lib
+[![Version](https://img.shields.io/npm/v/@adobe/aio-lib-core-networking.svg)](https://npmjs.org/package/@adobe/aio-lib-core-networking)
+[![Downloads/week](https://img.shields.io/npm/dw/@adobe/aio-lib-core-networking.svg)](https://npmjs.org/package/@adobe/aio-lib-core-networking)
+[![Node.js CI](https://github.com/adobe/aio-lib-core-networking/actions/workflows/node.js.yml/badge.svg)](https://github.com/adobe/aio-lib-core-networking/actions/workflows/node.js.yml)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
+[![Codecov Coverage](https://img.shields.io/codecov/c/github/adobe/aio-lib-core-networking/master.svg?style=flat-square)](https://codecov.io/gh/adobe/aio-lib-core-networking/)
+
+
+# Adobe I/O Core Networking Lib
 
 ### Installing
 
@@ -28,38 +36,37 @@ $ npm install @adobe/aio-lib-core-networking
 1) Initialize the SDK
 
 ```javascript
-const sdk = require('@adobe/aio-lib-core-networking')
-
-async function sdkTest() {
-  //initialize sdk
-  const client = await sdk.init('<tenant>', 'x-api-key', '<valid auth token>')
-}
+const { HttpExponentialBackoff } = require('@adobe/aio-lib-core-networking')
+const fetchRetry = new HttpExponentialBackoff()
 ```
 
 2) Call methods using the initialized SDK
 
 ```javascript
-const sdk = require('@adobe/aio-lib-core-networking')
 
+const { HttpExponentialBackoff } = require('@adobe/aio-lib-core-networking')
+const fetchRetry = new HttpExponentialBackoff()
 async function sdkTest() {
-  // initialize sdk
-  const client = await sdk.init('<tenant>', 'x-api-key', '<valid auth token>')
 
-  // call methods
-  try {
-    // get profiles by custom filters
-    const result = await client.getSomething({})
-    console.log(result)
-
-  } catch (e) {
-    console.error(e)
-  }
+  return new Promise((resolve, reject) => {
+    fetchRetry.exponentialBackoff(url, requestOptions, retryOptions, retryOn, retryDelay)
+    .then((response) => {
+      if (!response.ok) {
+        throw Error(reduceError(response))
+      }
+      resolve(response.json())
+    })
+    .catch(err => {
+      reject(
+        new codes.ERROR_GET_SOMETHING({ sdkDetails, messageValues: err }))
+    })
+  }) 
 }
+
 ```
 
 {{>main-index~}}
 {{>all-docs~}}
-
 
 ### Debug Logs
 

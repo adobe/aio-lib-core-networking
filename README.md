@@ -1,5 +1,5 @@
 <!--
-Copyright 2019 Adobe. All rights reserved.
+Copyright 2021 Adobe. All rights reserved.
 This file is licensed to you under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License. You may obtain a copy
 of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -10,11 +10,19 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 -->
 
+<!--
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+DO NOT update README.md, it is generated.
+Modify 'docs/readme_template.md', then run `npm run generate-docs`.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+-->
+
 [![Version](https://img.shields.io/npm/v/@adobe/aio-lib-core-networking.svg)](https://npmjs.org/package/@adobe/aio-lib-core-networking)
 [![Downloads/week](https://img.shields.io/npm/dw/@adobe/aio-lib-core-networking.svg)](https://npmjs.org/package/@adobe/aio-lib-core-networking)
 [![Node.js CI](https://github.com/adobe/aio-lib-core-networking/actions/workflows/node.js.yml/badge.svg)](https://github.com/adobe/aio-lib-core-networking/actions/workflows/node.js.yml)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
 [![Codecov Coverage](https://img.shields.io/codecov/c/github/adobe/aio-lib-core-networking/master.svg?style=flat-square)](https://codecov.io/gh/adobe/aio-lib-core-networking/)
+
 
 # Adobe I/O Core Networking Lib
 
@@ -28,15 +36,16 @@ $ npm install @adobe/aio-lib-core-networking
 1) Initialize the SDK
 
 ```javascript
-const fetchRetry = require('@adobe/aio-lib-core-networking')
-
+const { HttpExponentialBackoff } = require('@adobe/aio-lib-core-networking')
+const fetchRetry = new HttpExponentialBackoff()
 ```
 
 2) Call methods using the initialized SDK
 
 ```javascript
 
-const fetchRetry = require('@adobe/aio-lib-core-networking')
+const { HttpExponentialBackoff } = require('@adobe/aio-lib-core-networking')
+const fetchRetry = new HttpExponentialBackoff()
 async function sdkTest() {
 
   return new Promise((resolve, reject) => {
@@ -62,13 +71,9 @@ async function sdkTest() {
 
 * [@adobe/aio-lib-core-networking](#module_@adobe/aio-lib-core-networking)
     * [~HttpExponentialBackoff](#module_@adobe/aio-lib-core-networking..HttpExponentialBackoff)
-        * [.exponentialBackoff(url, requestOptions, retryOptions, retryOn, retryDelay)](#module_@adobe/aio-lib-core-networking..HttpExponentialBackoff+exponentialBackoff) ⇒ <code>Promise.&lt;Response&gt;</code>
+        * [.exponentialBackoff(url, requestOptions, retryOptions, [retryOn], [retryDelay])](#module_@adobe/aio-lib-core-networking..HttpExponentialBackoff+exponentialBackoff) ⇒ <code>Promise.&lt;Response&gt;</code>
 
 <a name="module_@adobe/aio-lib-core-networking..HttpExponentialBackoff"></a>
-
-### Working of HttpExponentialBackoff
-
-![image not available](docs/sequenceDiagram.jpeg?s=50)
 
 ### @adobe/aio-lib-core-networking~HttpExponentialBackoff
 This class provides methods to implement fetch with retries.
@@ -78,7 +83,7 @@ with defaults set to max of 3 retries and initial Delay as 100ms
 **Kind**: inner class of [<code>@adobe/aio-lib-core-networking</code>](#module_@adobe/aio-lib-core-networking)  
 <a name="module_@adobe/aio-lib-core-networking..HttpExponentialBackoff+exponentialBackoff"></a>
 
-#### httpExponentialBackoff.exponentialBackoff(url, requestOptions, retryOptions, retryOn, retryDelay) ⇒ <code>Promise.&lt;Response&gt;</code>
+#### httpExponentialBackoff.exponentialBackoff(url, requestOptions, retryOptions, [retryOn], [retryDelay]) ⇒ <code>Promise.&lt;Response&gt;</code>
 This function will retry connecting to a url end-point, with
 exponential backoff. Returns a Promise.
 
@@ -88,10 +93,10 @@ exponential backoff. Returns a Promise.
 | Param | Type | Description |
 | --- | --- | --- |
 | url | <code>string</code> | endpoint url |
-| requestOptions | <code>object</code> | request options which includes the HTTP method, headers, timeout, etc. |
-| retryOptions | <code>object</code> | retry options with options being maxRetries and initialDelayInMillis |
-| retryOn | <code>function</code> \| <code>Array</code> | Optional Function or Array. If provided, will be used instead of the default |
-| retryDelay | <code>function</code> \| <code>number</code> | Optional Function or number. If provided, will be used instead of the default |
+| requestOptions | <code>object</code> | request options |
+| retryOptions | <code>object</code> | retry options with keys being maxRetries and initialDelay in ms |
+| [retryOn] | <code>function</code> \| <code>Array</code> | Optional Function or Array. If provided, will be used instead of the default |
+| [retryDelay] | <code>function</code> \| <code>number</code> | Optional Function or number. If provided, will be used instead of the default |
 
 ### Debug Logs
 
