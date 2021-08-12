@@ -9,11 +9,9 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-/** @module @adobe/aio-lib-core-networking */
-
 const DEFAULT_MAX_RETRIES = 3
 const DEFAULY_INITIAL_DELAY_MS = 100
-const loggerNamespace = '@adobe/aio-lib-core-networking'
+const loggerNamespace = '@adobe/aio-lib-core-networking:HttpExponentialBackoff'
 const logger = require('@adobe/aio-lib-core-logging')(
   loggerNamespace, { level: process.env.LOG_LEVEL })
 const originalFetch = require('node-fetch')

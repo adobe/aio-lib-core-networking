@@ -10,7 +10,10 @@ governing permissions and limitations under the License.
 */
 
 const HttpExponentialBackoff = require('./HttpExponentialBackoff')
+const NtlmFetch = require('./NtlmFetch')
 
+/** @module @adobe/aio-lib-core-networking */
 module.exports = {
-  HttpExponentialBackoff
+  HttpExponentialBackoff,
+  NtlmFetch
 }

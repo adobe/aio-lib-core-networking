@@ -65,29 +65,52 @@ async function sdkTest() {
 
 ```
 
+## Modules
+
+<dl>
+<dt><a href="#module_@adobe/aio-lib-core-networking">@adobe/aio-lib-core-networking</a></dt>
+<dd></dd>
+</dl>
+
+## Classes
+
+<dl>
+<dt><a href="#HttpExponentialBackoff">HttpExponentialBackoff</a></dt>
+<dd><p>This class provides methods to implement fetch with retries.
+The retries use exponential backoff strategy
+with defaults set to max of 3 retries and initial Delay as 100ms</p>
+</dd>
+<dt><a href="#NtlmFetch">NtlmFetch</a></dt>
+<dd><p>This provides a wrapper for fetch that facilitates NTLM Auth negotiation and authorization.</p>
+</dd>
+</dl>
+
+## Typedefs
+
+<dl>
+<dt><a href="#NtlmAuthOptions">NtlmAuthOptions</a> : <code>object</code></dt>
+<dd><p>NTLM Auth Options.</p>
+</dd>
+</dl>
+
 <a name="module_@adobe/aio-lib-core-networking"></a>
 
 ## @adobe/aio-lib-core-networking
+<a name="HttpExponentialBackoff"></a>
 
-* [@adobe/aio-lib-core-networking](#module_@adobe/aio-lib-core-networking)
-    * [~HttpExponentialBackoff](#module_@adobe/aio-lib-core-networking..HttpExponentialBackoff)
-        * [.exponentialBackoff(url, requestOptions, retryOptions, [retryOn], [retryDelay])](#module_@adobe/aio-lib-core-networking..HttpExponentialBackoff+exponentialBackoff) ⇒ <code>Promise.&lt;Response&gt;</code>
-
-<a name="module_@adobe/aio-lib-core-networking..HttpExponentialBackoff"></a>
-
-### @adobe/aio-lib-core-networking~HttpExponentialBackoff
+## HttpExponentialBackoff
 This class provides methods to implement fetch with retries.
 The retries use exponential backoff strategy
 with defaults set to max of 3 retries and initial Delay as 100ms
 
-**Kind**: inner class of [<code>@adobe/aio-lib-core-networking</code>](#module_@adobe/aio-lib-core-networking)  
-<a name="module_@adobe/aio-lib-core-networking..HttpExponentialBackoff+exponentialBackoff"></a>
+**Kind**: global class  
+<a name="HttpExponentialBackoff+exponentialBackoff"></a>
 
-#### httpExponentialBackoff.exponentialBackoff(url, requestOptions, retryOptions, [retryOn], [retryDelay]) ⇒ <code>Promise.&lt;Response&gt;</code>
+### httpExponentialBackoff.exponentialBackoff(url, requestOptions, retryOptions, [retryOn], [retryDelay]) ⇒ <code>Promise.&lt;Response&gt;</code>
 This function will retry connecting to a url end-point, with
 exponential backoff. Returns a Promise.
 
-**Kind**: instance method of [<code>HttpExponentialBackoff</code>](#module_@adobe/aio-lib-core-networking..HttpExponentialBackoff)  
+**Kind**: instance method of [<code>HttpExponentialBackoff</code>](#HttpExponentialBackoff)  
 **Returns**: <code>Promise.&lt;Response&gt;</code> - Promise object representing the http response  
 
 | Param | Type | Description |
@@ -97,6 +120,55 @@ exponential backoff. Returns a Promise.
 | retryOptions | <code>object</code> | retry options with keys being maxRetries and initialDelay in ms |
 | [retryOn] | <code>function</code> \| <code>Array</code> | Optional Function or Array. If provided, will be used instead of the default |
 | [retryDelay] | <code>function</code> \| <code>number</code> | Optional Function or number. If provided, will be used instead of the default |
+
+<a name="NtlmFetch"></a>
+
+## NtlmFetch
+This provides a wrapper for fetch that facilitates NTLM Auth negotiation and authorization.
+
+**Kind**: global class  
+
+* [NtlmFetch](#NtlmFetch)
+    * [new NtlmFetch(authOptions)](#new_NtlmFetch_new)
+    * [.fetch(url, options)](#NtlmFetch+fetch) ⇒ <code>Response</code>
+
+<a name="new_NtlmFetch_new"></a>
+
+### new NtlmFetch(authOptions)
+Constructor.
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| authOptions | [<code>NtlmAuthOptions</code>](#NtlmAuthOptions) | the auth options to connect with |
+
+<a name="NtlmFetch+fetch"></a>
+
+### ntlmFetch.fetch(url, options) ⇒ <code>Response</code>
+Fetch function, using the configured NTLM Auth options.
+
+**Kind**: instance method of [<code>NtlmFetch</code>](#NtlmFetch)  
+**Returns**: <code>Response</code> - a fetch Response object  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| url | <code>string</code> | the url to fetch from |
+| options | <code>object</code> | the fetch options |
+
+<a name="NtlmAuthOptions"></a>
+
+## NtlmAuthOptions : <code>object</code>
+NTLM Auth Options.
+
+**Kind**: global typedef  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| username | <code>string</code> | the Active Directory username |
+| password | <code>string</code> | the Active Directory password |
+| domain | <code>string</code> | the Active Directory domain |
+| [workstation] | <code>string</code> | the workstation name |
 
 ### Debug Logs
 

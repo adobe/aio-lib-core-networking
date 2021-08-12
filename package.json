@@ -4,10 +4,11 @@
   },
   "bundleDependencies": false,
   "dependencies": {
-    "node-fetch": "^2.6.0",
     "@adobe/aio-lib-core-errors": "^3.0.0",
     "@adobe/aio-lib-core-logging": "1.1.0",
-    "fetch-retry": "^3.0.1"
+    "fetch-retry": "^3.0.1",
+    "httpntlm": "^1.7.7",
+    "node-fetch": "^2.6.0"
   },
   "deprecated": false,
   "description": "Adobe I/O Lib Core Networking",
@@ -49,5 +50,9 @@
     "typings": "jsdoc -t node_modules/tsd-jsdoc/dist -r src/*.js -d .",
     "unit-tests": "jest --config test/jest.config.js --maxWorkers=2"
   },
-  "version": "1.0.1"
+  "version": "1.0.1",
+  "engineStrict": true,
+  "engines": {
+    "node": ">=12.0.0"
+  }
 }
