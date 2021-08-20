@@ -26,7 +26,7 @@ function createLdapServer (port = 1389) {
   const server = ldap.createServer()
 
   server.bind('cn=admin', (req, res, next) => {
-    if (req.dn.toString() !== 'cn=root' || req.credentials !== 'secret') {
+    if (req.dn.toString() !== 'cn=admin' || req.credentials !== 'secret') {
       return next(new ldap.InvalidCredentialsError())
     }
 
