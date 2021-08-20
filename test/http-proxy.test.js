@@ -17,10 +17,11 @@ const { createHttpProxy } = require('./server/http-proxy')
 const { createApiServer } = require('./server/api-server')
 
 describe('proxy (no auth)', () => {
-  let proxyServer, proxyAgent
+  let proxyServer, proxyCleanup, proxyAgent
 
   beforeAll(async () => {
-    proxyServer = await createHttpProxy()
+    [proxyServer, proxyCleanup] = await createHttpProxy()
+
     const proxyServerAddress = proxyServer.address()
     const proxyUrl = `http://${proxyServerAddress.address}:${proxyServerAddress.port}`
     proxyAgent = new HttpProxyAgent(proxyUrl)
@@ -28,6 +29,7 @@ describe('proxy (no auth)', () => {
 
   afterAll(() => {
     proxyServer.close()
+    proxyCleanup()
   })
 
   test('api server success', async () => {
@@ -35,37 +37,29 @@ describe('proxy (no auth)', () => {
     const apiServerAddress = apiServer.address()
     const queryObject = { foo: 'bar' }
 
-    try {
-      const testUrl = `http://${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
-      const response = await fetch(testUrl, { agent: proxyAgent })
-      const json = await response.json()
-      expect(json).toStrictEqual(queryObject)
-    } catch (e) {
-      console.error(e)
-    } finally {
-      apiServer.close()
-    }
+    const testUrl = `http://${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
+    const response = await fetch(testUrl, { agent: proxyAgent })
+    const json = await response.json()
+    expect(json).toStrictEqual(queryObject)
+    apiServer.close()
   })
 
   test('api server failure', async () => {
-    try {
-      // api server is not instantiated
-      const testUrl = 'http://localhost:3001/mirror/?foo=bar'
-      const response = await fetch(testUrl, { agent: proxyAgent })
-      expect(response.ok).toEqual(false)
-      expect(response.status).toEqual(503)
-    } catch (e) {
-      console.error(e)
-    }
+    // api server is not instantiated
+    const testUrl = 'http://localhost:3001/mirror/?foo=bar'
+    const response = await fetch(testUrl, { agent: proxyAgent })
+    expect(response.ok).toEqual(false)
+    expect(response.status).toEqual(503)
   })
 })
 
 describe('proxy (basic auth)', () => {
-  let proxyServer, proxyAgent
+  let proxyServer, proxyCleanup, proxyAgent
   let apiServer, apiServerAddress
 
   beforeAll(async () => {
-    proxyServer = await createHttpProxy({ useBasicAuth: true }) // admin:secret
+    [proxyServer, proxyCleanup] = await createHttpProxy({ useBasicAuth: true }) // admin:secret
+
     const proxyServerAddress = proxyServer.address()
     const proxyUrl = `http://${proxyServerAddress.address}:${proxyServerAddress.port}`
     proxyAgent = new HttpProxyAgent(proxyUrl)
@@ -76,22 +70,17 @@ describe('proxy (basic auth)', () => {
 
   afterAll(() => {
     proxyServer.close()
+    proxyCleanup()
     apiServer.close()
   })
 
   test('api server success', async () => {
     const queryObject = { foo: 'bar' }
 
-    try {
-      const testUrl = `http://admin:secret@${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
-      const response = await fetch(testUrl, { agent: proxyAgent })
-      const json = await response.json()
-      expect(json).toStrictEqual(queryObject)
-    } catch (e) {
-      console.error(e)
-    } finally {
-      apiServer.close()
-    }
+    const testUrl = `http://admin:secret@${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
+    const response = await fetch(testUrl, { agent: proxyAgent })
+    const json = await response.json()
+    expect(json).toStrictEqual(queryObject)
   })
 
   test('api server failure', async () => {
@@ -106,11 +95,12 @@ describe('proxy (basic auth)', () => {
 })
 
 describe('proxy (ntlm auth)', () => {
-  let proxyServer, proxyAgent
+  let proxyServer, proxyCleanup, proxyAgent
   let apiServer, apiServerAddress
 
   beforeAll(async () => {
-    proxyServer = await createHttpProxy({ useNtlmAuth: true })
+    [proxyServer, proxyCleanup] = await createHttpProxy({ useNtlmAuth: true })
+
     const proxyServerAddress = proxyServer.address()
     const proxyUrl = `http://${proxyServerAddress.address}:${proxyServerAddress.port}`
     proxyAgent = new HttpProxyAgent(proxyUrl)
@@ -121,6 +111,7 @@ describe('proxy (ntlm auth)', () => {
 
   afterAll(() => {
     proxyServer.close()
+    proxyCleanup()
     apiServer.close()
   })
 

@@ -33,6 +33,7 @@ async function createHttpProxy (options = {}) {
   const proxy = httpProxy.createProxyServer({})
 
   const app = express()
+  let ldapServer
 
   if (useBasicAuth) {
     app.use(basicAuth({
@@ -42,7 +43,7 @@ async function createHttpProxy (options = {}) {
   }
 
   if (useNtlmAuth) {
-    const ldapServer = createLdapServer()
+    ldapServer = createLdapServer()
 
     app.use(ntlmAuth({
       debug: function () {
@@ -71,10 +72,16 @@ async function createHttpProxy (options = {}) {
   })
 
   const server = await app.listen(port, 'localhost')
+  const cleanup = () => {
+    if (ldapServer) {
+      ldapServer.close()
+    }
+  }
+
   return new Promise(resolve => {
     server.on('listening', () => {
       logger.debug('Proxy server started on port %s at %s', server.address().port, server.address().address)
-      resolve(server)
+      resolve([server, cleanup])
     })
   })
 }
