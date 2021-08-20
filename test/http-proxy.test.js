@@ -77,8 +77,14 @@ describe('proxy (basic auth)', () => {
   test('api server success', async () => {
     const queryObject = { foo: 'bar' }
 
-    const testUrl = `http://admin:secret@${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
-    const response = await fetch(testUrl, { agent: proxyAgent })
+    const username = 'admin'
+    const password = 'secret'
+    const headers = {
+      Authorization: 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
+    }
+
+    const testUrl = `http://${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
+    const response = await fetch(testUrl, { headers, agent: proxyAgent })
     const json = await response.json()
     expect(json).toStrictEqual(queryObject)
   })
@@ -86,8 +92,14 @@ describe('proxy (basic auth)', () => {
   test('api server failure', async () => {
     const queryObject = { bar: 'foo' }
 
-    const testUrl = `http://admin:dont-know-the-password@${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
-    const response = await fetch(testUrl, { agent: proxyAgent })
+    const username = 'admin'
+    const password = 'dont-know-the-password'
+    const headers = {
+      Authorization: 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
+    }
+
+    const testUrl = `http://${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
+    const response = await fetch(testUrl, { headers, agent: proxyAgent })
     expect(response.ok).toEqual(false)
     expect(response.status).toEqual(401)
     expect(response.headers.get('www-authenticate')).toEqual('Basic')
