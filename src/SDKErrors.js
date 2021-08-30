@@ -49,5 +49,3 @@ module.exports = {
 
 // Define your error codes with the wrapper
 E('ERROR_PROXY_FETCH_INITIALIZATION', 'Proxy fetch initialization error(s). Missing arguments: %s')
-E('ERROR_NTLM_FETCH_INITIALIZATION', 'NTLM fetch initialization error(s). Missing arguments: %s')
-E('ERROR_NTLM_NEGOTIATE_NO_AGENT', 'NTLM negotiate, agent not specified')

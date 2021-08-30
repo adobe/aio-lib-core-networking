@@ -10,7 +10,6 @@ governing permissions and limitations under the License.
 */
 
 const HttpExponentialBackoff = require('./HttpExponentialBackoff')
-const NtlmFetch = require('./NtlmFetch')
 const ProxyFetch = require('./ProxyFetch')
 const originalFetch = require('node-fetch')
 const config = require('@adobe/aio-lib-core-config')
@@ -68,7 +67,6 @@ function createFetch (proxyOptions = getProxyOptionsFromConfig()) {
 /** @module @adobe/aio-lib-core-networking */
 module.exports = {
   HttpExponentialBackoff,
-  NtlmFetch,
   ProxyFetch,
   createFetch,
   getProxyOptionsFromConfig

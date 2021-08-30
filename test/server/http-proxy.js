@@ -14,8 +14,6 @@ const logger = require('@adobe/aio-lib-core-logging')(loggerNamespace, { level: 
 const express = require('express')
 const httpProxy = require('http-proxy')
 const basicAuth = require('express-basic-auth')
-const ntlmAuth = require('express-ntlm')
-const { createLdapServer } = require('./ldap-server')
 
 /**
  * Create a pass-through HTTP proxy server.
@@ -27,31 +25,17 @@ const { createLdapServer } = require('./ldap-server')
  * @returns {object} the HTTP proxy server object
  */
 async function createHttpProxy (options = {}) {
-  const { useBasicAuth = false, useNtlmAuth = false, port = 3000 } = options
+  const { useBasicAuth = false, port = 3000 } = options
 
   // proxy options: https://github.com/http-party/node-http-proxy/blob/HEAD/lib/http-proxy.js#L26-L42
   const proxy = httpProxy.createProxyServer({})
 
   const app = express()
-  let ldapServer
 
   if (useBasicAuth) {
     app.use(basicAuth({
       users: { admin: 'secret' },
       challenge: true
-    }))
-  }
-
-  if (useNtlmAuth) {
-    ldapServer = createLdapServer()
-
-    app.use(ntlmAuth({
-      debug: function () {
-        var args = Array.prototype.slice.apply(arguments)
-        console.log.apply(null, args)
-      },
-      domain: 'MYDOMAIN',
-      domaincontroller: ldapServer.url
     }))
   }
 
@@ -69,11 +53,7 @@ async function createHttpProxy (options = {}) {
   })
 
   const server = await app.listen(port, 'localhost')
-  const cleanup = () => {
-    if (ldapServer) {
-      ldapServer.close()
-    }
-  }
+  const cleanup = () => {}
 
   return new Promise(resolve => {
     server.on('listening', () => {

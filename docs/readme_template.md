@@ -36,15 +36,16 @@ $ npm install @adobe/aio-lib-core-networking
 1) Initialize the SDK
 
 ```javascript
-const { HttpExponentialBackoff } = require('@adobe/aio-lib-core-networking')
+const { HttpExponentialBackoff, createFetch } = require('@adobe/aio-lib-core-networking')
 const fetchRetry = new HttpExponentialBackoff()
+const proxyFetch = createFetch()
 ```
 
 2) Call methods using the initialized SDK
 
 ```javascript
 
-const { HttpExponentialBackoff } = require('@adobe/aio-lib-core-networking')
+const { HttpExponentialBackoff, createFetch } = require('@adobe/aio-lib-core-networking')
 const fetchRetry = new HttpExponentialBackoff()
 async function sdkTest() {
 
@@ -63,6 +64,15 @@ async function sdkTest() {
   }) 
 }
 
+let proxyFetch 
+// this will get the proxy settings from the config, if available (proxy.url, proxy.username, proxy.password)
+proxyFetch = createFetch()
+
+// this will use the passed in proxy settings. only proxyUrl is required
+proxyFetch = createFetch({ proxyUrl: 'http://my.proxy:8080', username: 'admin', password: 'secret' })
+
+// if the proxy settings are not passed in, and not available in the config, it falls back to a simple fetch
+const simpleFetch = createFetch()
 ```
 
 {{>main-index~}}

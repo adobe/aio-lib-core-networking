@@ -8,7 +8,6 @@
     "@adobe/aio-lib-core-errors": "^3.0.0",
     "@adobe/aio-lib-core-logging": "1.1.0",
     "fetch-retry": "^3.0.1",
-    "httpntlm": "^1.7.7",
     "node-fetch": "^2.6.0",
     "proxy-agent": "^5.0.0"
   },
@@ -30,7 +29,6 @@
     "eslint-plugin-standard": "^4.0.0",
     "express": "^4.17.1",
     "express-basic-auth": "^1.2.0",
-    "express-ntlm": "^2.6.0",
     "fetch-mock": "^9.0.0",
     "http-proxy": "^1.18.1",
     "jest": "^25.1.0",
@@ -40,7 +38,6 @@
     "jest-plugin-fs": "^2.9.0",
     "jsdoc": "^3.6.3",
     "jsdoc-to-markdown": "^5.0.0",
-    "ldapjs": "^2.3.1",
     "openapi-schema-validator": "^3.0.3",
     "query-string": "^7.0.1",
     "stdout-stderr": "^0.1.9",

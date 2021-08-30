@@ -90,16 +90,30 @@ const simpleFetch = createFetch()
 The retries use exponential backoff strategy
 with defaults set to max of 3 retries and initial Delay as 100ms</p>
 </dd>
-<dt><a href="#NtlmFetch">NtlmFetch</a></dt>
+<dt><a href="#ProxyFetch">ProxyFetch</a></dt>
 <dd><p>This provides a wrapper for fetch that facilitates NTLM Auth negotiation and authorization.</p>
+</dd>
+</dl>
+
+## Functions
+
+<dl>
+<dt><a href="#getProxyOptionsFromConfig">getProxyOptionsFromConfig()</a> ⇒ <code>object</code></dt>
+<dd><p>Gets the proxy options from the config.</p>
+</dd>
+<dt><a href="#createFetch">createFetch([proxyOptions])</a> ⇒ <code>function</code></dt>
+<dd><p>Return the appropriate Fetch function depending on proxy settings.</p>
+</dd>
+<dt><a href="#urlToHttpOptions">urlToHttpOptions(aUrl)</a> ⇒ <code>object</code></dt>
+<dd><p>Converts a URL to a suitable object for http request options.</p>
 </dd>
 </dl>
 
 ## Typedefs
 
 <dl>
-<dt><a href="#NtlmAuthOptions">NtlmAuthOptions</a> : <code>object</code></dt>
-<dd><p>NTLM Auth Options.</p>
+<dt><a href="#ProxyAuthOptions">ProxyAuthOptions</a> : <code>object</code></dt>
+<dd><p>Auth Options.</p>
 </dd>
 </dl>
 
@@ -131,54 +145,96 @@ exponential backoff. Returns a Promise.
 | [retryOn] | <code>function</code> \| <code>Array</code> | Optional Function or Array. If provided, will be used instead of the default |
 | [retryDelay] | <code>function</code> \| <code>number</code> | Optional Function or number. If provided, will be used instead of the default |
 
-<a name="NtlmFetch"></a>
+<a name="ProxyFetch"></a>
 
-## NtlmFetch
+## ProxyFetch
 This provides a wrapper for fetch that facilitates NTLM Auth negotiation and authorization.
 
 **Kind**: global class  
 
-* [NtlmFetch](#NtlmFetch)
-    * [new NtlmFetch(authOptions)](#new_NtlmFetch_new)
-    * [.fetch(url, options)](#NtlmFetch+fetch) ⇒ <code>Response</code>
+* [ProxyFetch](#ProxyFetch)
+    * [new ProxyFetch(authOptions)](#new_ProxyFetch_new)
+    * [.proxyAgent()](#ProxyFetch+proxyAgent) ⇒ <code>http.Agent</code>
+    * [.fetch(resource, options)](#ProxyFetch+fetch) ⇒ <code>Promise.&lt;Response&gt;</code>
 
-<a name="new_NtlmFetch_new"></a>
+<a name="new_ProxyFetch_new"></a>
 
-### new NtlmFetch(authOptions)
-Constructor.
+### new ProxyFetch(authOptions)
+Initialize this class with Proxy auth options
 
 
 | Param | Type | Description |
 | --- | --- | --- |
-| authOptions | [<code>NtlmAuthOptions</code>](#NtlmAuthOptions) | the auth options to connect with |
+| authOptions | [<code>ProxyAuthOptions</code>](#ProxyAuthOptions) | the auth options to connect with |
 
-<a name="NtlmFetch+fetch"></a>
+<a name="ProxyFetch+proxyAgent"></a>
 
-### ntlmFetch.fetch(url, options) ⇒ <code>Response</code>
+### proxyFetch.proxyAgent() ⇒ <code>http.Agent</code>
+Returns the http.Agent used for this proxy
+
+**Kind**: instance method of [<code>ProxyFetch</code>](#ProxyFetch)  
+**Returns**: <code>http.Agent</code> - a http.Agent for basic auth proxy  
+<a name="ProxyFetch+fetch"></a>
+
+### proxyFetch.fetch(resource, options) ⇒ <code>Promise.&lt;Response&gt;</code>
 Fetch function, using the configured NTLM Auth options.
 
-**Kind**: instance method of [<code>NtlmFetch</code>](#NtlmFetch)  
-**Returns**: <code>Response</code> - a fetch Response object  
+**Kind**: instance method of [<code>ProxyFetch</code>](#ProxyFetch)  
+**Returns**: <code>Promise.&lt;Response&gt;</code> - Promise object representing the http response  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| url | <code>string</code> | the url to fetch from |
+| resource | <code>string</code> \| <code>Request</code> | the url or Request object to fetch from |
 | options | <code>object</code> | the fetch options |
 
-<a name="NtlmAuthOptions"></a>
+<a name="getProxyOptionsFromConfig"></a>
 
-## NtlmAuthOptions : <code>object</code>
-NTLM Auth Options.
+## getProxyOptionsFromConfig() ⇒ <code>object</code>
+Gets the proxy options from the config.
+
+**Kind**: global function  
+**Returns**: <code>object</code> - the proxy options  
+<a name="createFetch"></a>
+
+## createFetch([proxyOptions]) ⇒ <code>function</code>
+Return the appropriate Fetch function depending on proxy settings.
+
+**Kind**: global function  
+**Returns**: <code>function</code> - the Fetch API function  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [proxyOptions] | <code>object</code> | the options for the proxy |
+| proxyOptions.proxyUrl | <code>string</code> | the url for the proxy |
+| proxyOptions.username | <code>string</code> | the username for the proxy |
+| proxyOptions.password | <code>string</code> | the password for the proxy |
+
+<a name="urlToHttpOptions"></a>
+
+## urlToHttpOptions(aUrl) ⇒ <code>object</code>
+Converts a URL to a suitable object for http request options.
+
+**Kind**: global function  
+**Returns**: <code>object</code> - an object to pass for http request options  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| aUrl | <code>string</code> | the url to parse |
+
+<a name="ProxyAuthOptions"></a>
+
+## ProxyAuthOptions : <code>object</code>
+Auth Options.
 
 **Kind**: global typedef  
 **Properties**
 
 | Name | Type | Description |
 | --- | --- | --- |
-| username | <code>string</code> | the Active Directory username |
-| password | <code>string</code> | the Active Directory password |
-| domain | <code>string</code> | the Active Directory domain |
-| [workstation] | <code>string</code> | the workstation name |
+| username | <code>string</code> | the username |
+| password | <code>string</code> | the password |
+| [domain] | <code>string</code> | (NTLM auth only) the Active Directory domain |
+| [workstation] | <code>string</code> | (NTLM auth only) the workstation name |
 
 ### Debug Logs
 

@@ -10,7 +10,7 @@ governing permissions and limitations under the License.
 */
 
 const ProxyFetch = require('../src/ProxyFetch')
-// const NtlmFetch = require('../src/NtlmFetch')
+const { codes } = require('../src/SDKErrors')
 const queryString = require('query-string')
 const { createHttpProxy } = require('./server/http-proxy')
 const { createApiServer } = require('./server/api-server')
@@ -19,6 +19,14 @@ const { createApiServer } = require('./server/api-server')
 jest.mock('node-fetch', () =>
   jest.requireActual('node-fetch')
 )
+
+test('proxy init error', () => {
+  const err = new codes.ERROR_PROXY_FETCH_INITIALIZATION({
+    sdkDetails: {},
+    messageValues: 'proxyUrl'
+  })
+  expect(() => new ProxyFetch()).toThrow(err)
+})
 
 describe('proxy (no auth)', () => {
   let proxyServer, proxyCleanup, proxyFetch
@@ -113,48 +121,4 @@ describe('proxy (basic auth)', () => {
     expect(response.status).toEqual(401)
     expect(response.headers.get('www-authenticate')).toEqual('Basic')
   })
-})
-
-describe('proxy (ntlm auth)', () => {
-  // eslint-disable-next-line no-unused-vars
-  let proxyServer, proxyCleanup, proxyUrl
-  // eslint-disable-next-line no-unused-vars
-  let apiServer, apiServerAddress
-
-  beforeAll(async () => {
-    [proxyServer, proxyCleanup] = await createHttpProxy({ useNtlmAuth: true })
-
-    const proxyServerAddress = proxyServer.address()
-    proxyUrl = `http://${proxyServerAddress.address}:${proxyServerAddress.port}`
-
-    apiServer = await createApiServer()
-    apiServerAddress = apiServer.address()
-  })
-
-  afterAll(() => {
-    proxyServer.close()
-    proxyCleanup()
-    apiServer.close()
-  })
-
-  // test('api server success', async () => {
-  //   const queryObject = { foo: 'bar' }
-  //   const ntlmFetch = new NtlmFetch({ proxyUrl, username: 'admin', password: 'secret', domain: 'MYDOMAIN' })
-
-  //   const testUrl = `http://${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
-  //   const response = await ntlmFetch.fetch(testUrl)
-  //   const json = await response.json()
-  //   expect(json).toStrictEqual(queryObject)
-  // })
-
-  // test('api server failure', async () => {
-  //   const queryObject = { bar: 'foo' }
-  //   const ntlmFetch = new NtlmFetch({ proxyUrl, username: 'admin', password: 'xsecret', domain: 'MYDOMAIN' })
-
-  //   const testUrl = `http://${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
-  //   const response = await ntlmFetch.fetch(testUrl)
-  //   expect(response.ok).toEqual(false)
-  //   expect(response.status).toEqual(401)
-  //   expect(response.headers.get('www-authenticate')).toEqual('NTLM')
-  // })
 })

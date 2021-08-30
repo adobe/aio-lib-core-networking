@@ -18,33 +18,65 @@ declare class HttpExponentialBackoff {
 }
 
 /**
- * NTLM Auth Options.
- * @property username - the Active Directory username
- * @property password - the Active Directory password
- * @property domain - the Active Directory domain
- * @property [workstation] - the workstation name
+ * Auth Options.
+ * @property username - the username
+ * @property password - the password
+ * @property [domain] - (NTLM auth only) the Active Directory domain
+ * @property [workstation] - (NTLM auth only) the workstation name
  */
-declare type NtlmAuthOptions = {
+declare type ProxyAuthOptions = {
     username: string;
     password: string;
-    domain: string;
+    domain?: string;
     workstation?: string;
 };
 
 /**
- * Constructor.
+ * Initialize this class with Proxy auth options
  * @param authOptions - the auth options to connect with
  */
-declare class NtlmFetch {
-    constructor(authOptions: NtlmAuthOptions);
+declare class ProxyFetch {
+    constructor(authOptions: ProxyAuthOptions);
+    /**
+     * Returns the http.Agent used for this proxy
+     * @returns a http.Agent for basic auth proxy
+     */
+    proxyAgent(): http.Agent;
     /**
      * Fetch function, using the configured NTLM Auth options.
-     * @param url - the url to fetch from
+     * @param resource - the url or Request object to fetch from
      * @param options - the fetch options
-     * @returns a fetch Response object
+     * @returns Promise object representing the http response
      */
-    fetch(url: string, options: any): Response;
+    fetch(resource: string | Request, options: any): Promise<Response>;
 }
 
+/**
+ * Gets the proxy options from the config.
+ * @returns the proxy options
+ */
+declare function getProxyOptionsFromConfig(): any;
+
+/**
+ * Return the appropriate Fetch function depending on proxy settings.
+ * @param [proxyOptions] - the options for the proxy
+ * @param proxyOptions.proxyUrl - the url for the proxy
+ * @param proxyOptions.username - the username for the proxy
+ * @param proxyOptions.password - the password for the proxy
+ * @returns the Fetch API function
+ */
+declare function createFetch(proxyOptions?: {
+    proxyUrl: string;
+    username: string;
+    password: string;
+}): (...params: any[]) => any;
+
 declare module "@adobe/aio-lib-core-networking" { }
+
+/**
+ * Converts a URL to a suitable object for http request options.
+ * @param aUrl - the url to parse
+ * @returns an object to pass for http request options
+ */
+declare function urlToHttpOptions(aUrl: string): any;
 
