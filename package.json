@@ -55,7 +55,7 @@
     "lint": "eslint src test",
     "test": "npm run lint && npm run unit-tests",
     "typings": "jsdoc -t node_modules/tsd-jsdoc/dist -r src/*.js -d .",
-    "unit-tests": "jest --config test/jest.config.js --maxWorkers=2"
+    "unit-tests": "jest --config test/jest.config.js --runInBand"
   },
   "version": "1.0.1",
   "engineStrict": true,

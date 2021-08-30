@@ -15,8 +15,6 @@ const queryString = require('query-string')
 const { createHttpProxy } = require('./server/http-proxy')
 const { createApiServer } = require('./server/api-server')
 
-let apiServerPort = 3001
-
 // unmock node-fetch
 jest.mock('node-fetch', () =>
   jest.requireActual('node-fetch')
@@ -47,7 +45,7 @@ describe('proxy (no auth)', () => {
   })
 
   test('api server success', async () => {
-    const apiServer = await createApiServer({ port: apiServerPort++ })
+    const apiServer = await createApiServer()
     const apiServerAddress = apiServer.address()
     const queryObject = { foo: 'bar' }
 
@@ -77,7 +75,7 @@ describe('proxy (basic auth)', () => {
     const proxyServerAddress = proxyServer.address()
     proxyUrl = `http://${proxyServerAddress.address}:${proxyServerAddress.port}`
 
-    apiServer = await createApiServer({ port: apiServerPort++ })
+    apiServer = await createApiServer()
     apiServerAddress = apiServer.address()
   })
 
