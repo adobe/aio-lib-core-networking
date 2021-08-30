@@ -71,7 +71,7 @@ proxyFetch = createFetch()
 // this will use the passed in proxy settings. only proxyUrl is required
 proxyFetch = createFetch({ proxyUrl: 'http://my.proxy:8080', username: 'admin', password: 'secret' })
 
-// if the proxy settings are not passed in, or not available in the config, it falls back to a simple fetch
+// if the proxy settings are not passed in, and not available in the config, it falls back to a simple fetch
 const simpleFetch = createFetch()
 ```
 
