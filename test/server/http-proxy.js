@@ -52,9 +52,6 @@ async function createHttpProxy (options = {}) {
       },
       domain: 'MYDOMAIN',
       domaincontroller: ldapServer.url
-
-      // use different port (default: 389)
-      // domaincontroller: 'ldap://myad.example:3899',
     }))
   }
 
@@ -80,7 +77,7 @@ async function createHttpProxy (options = {}) {
 
   return new Promise(resolve => {
     server.on('listening', () => {
-      logger.debug('Proxy server started on port %s at %s', server.address().port, server.address().address)
+      logger.debug(`Proxy server started on port ${server.address().port} at ${server.address().address}`)
       resolve([server, cleanup])
     })
   })

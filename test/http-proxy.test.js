@@ -9,22 +9,26 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-const fetch = jest.requireActual('node-fetch')
+const ProxyFetch = require('../src/ProxyFetch')
 // const NtlmFetch = require('../src/NtlmFetch')
 const queryString = require('query-string')
-const HttpProxyAgent = require('proxy-agent')
 const { createHttpProxy } = require('./server/http-proxy')
 const { createApiServer } = require('./server/api-server')
 
+// unmock node-fetch
+jest.mock('node-fetch', () =>
+  jest.requireActual('node-fetch')
+)
+
 describe('proxy (no auth)', () => {
-  let proxyServer, proxyCleanup, proxyAgent
+  let proxyServer, proxyCleanup, proxyFetch
 
   beforeAll(async () => {
     [proxyServer, proxyCleanup] = await createHttpProxy()
 
     const proxyServerAddress = proxyServer.address()
     const proxyUrl = `http://${proxyServerAddress.address}:${proxyServerAddress.port}`
-    proxyAgent = new HttpProxyAgent(proxyUrl)
+    proxyFetch = new ProxyFetch({ proxyUrl })
   })
 
   afterAll(() => {
@@ -38,7 +42,7 @@ describe('proxy (no auth)', () => {
     const queryObject = { foo: 'bar' }
 
     const testUrl = `http://${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
-    const response = await fetch(testUrl, { agent: proxyAgent })
+    const response = await proxyFetch.fetch(testUrl)
     const json = await response.json()
     expect(json).toStrictEqual(queryObject)
     apiServer.close()
@@ -47,22 +51,21 @@ describe('proxy (no auth)', () => {
   test('api server failure', async () => {
     // api server is not instantiated
     const testUrl = 'http://localhost:3001/mirror/?foo=bar'
-    const response = await fetch(testUrl, { agent: proxyAgent })
+    const response = await proxyFetch.fetch(testUrl)
     expect(response.ok).toEqual(false)
     expect(response.status).toEqual(503)
   })
 })
 
 describe('proxy (basic auth)', () => {
-  let proxyServer, proxyCleanup, proxyAgent
+  let proxyServer, proxyCleanup, proxyUrl
   let apiServer, apiServerAddress
 
   beforeAll(async () => {
     [proxyServer, proxyCleanup] = await createHttpProxy({ useBasicAuth: true }) // admin:secret
 
     const proxyServerAddress = proxyServer.address()
-    const proxyUrl = `http://${proxyServerAddress.address}:${proxyServerAddress.port}`
-    proxyAgent = new HttpProxyAgent(proxyUrl)
+    proxyUrl = `http://${proxyServerAddress.address}:${proxyServerAddress.port}`
 
     apiServer = await createApiServer()
     apiServerAddress = apiServer.address()
@@ -79,12 +82,15 @@ describe('proxy (basic auth)', () => {
 
     const username = 'admin'
     const password = 'secret'
+    // we only set headers here for our test proxy server which doesn't handle the Proxy-Authorization header
+    // see https://github.com/LionC/express-basic-auth/pull/39
     const headers = {
       Authorization: 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
     }
+    const proxyFetch = new ProxyFetch({ proxyUrl, username, password })
 
     const testUrl = `http://${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
-    const response = await fetch(testUrl, { headers, agent: proxyAgent })
+    const response = await proxyFetch.fetch(testUrl, { headers })
     const json = await response.json()
     expect(json).toStrictEqual(queryObject)
   })
@@ -92,14 +98,17 @@ describe('proxy (basic auth)', () => {
   test('api server failure', async () => {
     const queryObject = { bar: 'foo' }
 
-    const username = 'admin'
+    const username = 'foo'
     const password = 'dont-know-the-password'
+    // we only set headers here for our test proxy server which doesn't handle the Proxy-Authorization header
+    // see https://github.com/LionC/express-basic-auth/pull/39
     const headers = {
       Authorization: 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
     }
+    const proxyFetch = new ProxyFetch({ proxyUrl, username, password })
 
     const testUrl = `http://${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
-    const response = await fetch(testUrl, { headers, agent: proxyAgent })
+    const response = await proxyFetch.fetch(testUrl, { headers })
     expect(response.ok).toEqual(false)
     expect(response.status).toEqual(401)
     expect(response.headers.get('www-authenticate')).toEqual('Basic')
@@ -107,15 +116,16 @@ describe('proxy (basic auth)', () => {
 })
 
 describe('proxy (ntlm auth)', () => {
-  let proxyServer, proxyCleanup, proxyAgent
+  // eslint-disable-next-line no-unused-vars
+  let proxyServer, proxyCleanup, proxyUrl
+  // eslint-disable-next-line no-unused-vars
   let apiServer, apiServerAddress
 
   beforeAll(async () => {
     [proxyServer, proxyCleanup] = await createHttpProxy({ useNtlmAuth: true })
 
     const proxyServerAddress = proxyServer.address()
-    const proxyUrl = `http://${proxyServerAddress.address}:${proxyServerAddress.port}`
-    proxyAgent = new HttpProxyAgent(proxyUrl)
+    proxyUrl = `http://${proxyServerAddress.address}:${proxyServerAddress.port}`
 
     apiServer = await createApiServer()
     apiServerAddress = apiServer.address()
@@ -129,27 +139,22 @@ describe('proxy (ntlm auth)', () => {
 
   // test('api server success', async () => {
   //   const queryObject = { foo: 'bar' }
+  //   const ntlmFetch = new NtlmFetch({ proxyUrl, username: 'admin', password: 'secret', domain: 'MYDOMAIN' })
 
-  //   try {
-  //     const ntlmFetch = new NtlmFetch({ username: 'admin', password: 'secret', domain: 'MYDOMAIN' })
-  //     const testUrl = `http://${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
-  //     const response = await ntlmFetch.fetch(testUrl, { agent: proxyAgent })
-  //     const json = await response.json()
-  //     expect(json).toStrictEqual(queryObject)
-  //   } catch (e) {
-  //     console.error(e)
-  //   } finally {
-  //     apiServer.close()
-  //   }
+  //   const testUrl = `http://${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
+  //   const response = await ntlmFetch.fetch(testUrl)
+  //   const json = await response.json()
+  //   expect(json).toStrictEqual(queryObject)
   // })
 
-  test('api server failure', async () => {
-    const queryObject = { bar: 'foo' }
+  // test('api server failure', async () => {
+  //   const queryObject = { bar: 'foo' }
+  //   const ntlmFetch = new NtlmFetch({ proxyUrl, username: 'admin', password: 'xsecret', domain: 'MYDOMAIN' })
 
-    const testUrl = `http://${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
-    const response = await fetch(testUrl, { agent: proxyAgent })
-    expect(response.ok).toEqual(false)
-    expect(response.status).toEqual(401)
-    expect(response.headers.get('www-authenticate')).toEqual('NTLM')
-  })
+  //   const testUrl = `http://${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
+  //   const response = await ntlmFetch.fetch(testUrl)
+  //   expect(response.ok).toEqual(false)
+  //   expect(response.status).toEqual(401)
+  //   expect(response.headers.get('www-authenticate')).toEqual('NTLM')
+  // })
 })

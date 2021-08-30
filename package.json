@@ -4,6 +4,7 @@
   },
   "bundleDependencies": false,
   "dependencies": {
+    "@adobe/aio-lib-core-config": "^2.0.1",
     "@adobe/aio-lib-core-errors": "^3.0.0",
     "@adobe/aio-lib-core-logging": "1.1.0",
     "fetch-retry": "^3.0.1",
@@ -34,6 +35,7 @@
     "http-proxy": "^1.18.1",
     "jest": "^25.1.0",
     "jest-fetch-mock": "^3.0.1",
+    "jest-html-reporter": "^3.4.1",
     "jest-junit": "^10.0.0",
     "jest-plugin-fs": "^2.9.0",
     "jsdoc": "^3.6.3",

@@ -25,7 +25,12 @@ module.exports = {
   },
   reporters: [
     'default',
-    'jest-junit'
+    'jest-junit',
+    ['jest-html-reporter', {
+      includeFailureMsg: true,
+      includeSuiteFailure: true,
+      includeConsoleLog: true
+    }]
   ],
   testEnvironment: 'node',
   setupFilesAfterEnv: [

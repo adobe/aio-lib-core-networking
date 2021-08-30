@@ -33,7 +33,7 @@ async function createApiServer (options = {}) {
   const server = await app.listen(port, 'localhost')
   return new Promise(resolve => {
     server.on('listening', () => {
-      logger.debug('API server started on port %s at %s', server.address().port, server.address().address)
+      logger.debug(`API server started on port ${server.address().port} at ${server.address().address}`)
       resolve(server)
     })
   })

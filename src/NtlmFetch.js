@@ -10,14 +10,15 @@ governing permissions and limitations under the License.
 */
 
 const loggerNamespace = '@adobe/aio-lib-core-networking:NTLMFetch'
-const logger = require('@adobe/aio-lib-core-logging')(
-  loggerNamespace, { level: process.env.LOG_LEVEL })
+const logger = require('@adobe/aio-lib-core-logging')(loggerNamespace, { level: process.env.LOG_LEVEL })
 const originalFetch = require('node-fetch')
 const { codes } = require('./SDKErrors')
 const http = require('http')
 const { ntlm } = require('httpntlm')
+const { urlToHttpOptions } = require('./utils')
+const HttpProxyAgent = require('proxy-agent')
 
-/* global Response */
+/* global Response, Request */
 
 /**
  * NTLM Auth Options.
@@ -66,22 +67,22 @@ class NtlmFetch {
    * Connects to the url with a NTLM Type 1 negotiation (encoding the NTLM auth details), and returns the Type2 Message challenge.
    *
    * @private
-   * @param {string} url the url to connect to
+   * @param {string | Request} resource - the url or Request object to fetch from
    * @param {object} agent the http agent to use
    * @returns {string} NTLM Type 2 Message challenge
    */
-  async ntlmNegotiate (url, agent) {
-    logger.debug(`ntlmNegotiate - url: ${url} agent: ${agent}`)
+  async ntlmNegotiate (resource, agent) {
+    logger.debug(`ntlmNegotiate - resource: ${resource} agent: ${agent}`)
 
     if (!agent) {
       logger.debug('ntlmNegotiate - agent not set')
-      const sdkDetails = { url, agent }
+      const sdkDetails = { resource, agent }
       throw new codes.ERROR_NTLM_NEGOTIATE_NO_AGENT({ sdkDetails })
     }
     const Authorization = ntlm.createType1Message(this.authOptions)
     logger.debug(`ntlmNegotiate - Authorization ${Authorization}`)
 
-    const response = await originalFetch(url, {
+    const response = await originalFetch(resource, {
       headers: {
         Connection: 'keep-alive',
         Authorization
@@ -95,46 +96,55 @@ class NtlmFetch {
   }
 
   /**
+   * Returns the http.Agent used for this proxy
+   *
+   * @returns {http.Agent} a http.Agent for basic auth proxy
+   */
+  proxyAgent () {
+    const { proxyUrl } = this.authOptions
+    const proxyOpts = urlToHttpOptions(proxyUrl)
+
+    return new HttpProxyAgent(proxyOpts)
+  }
+
+  /**
    * Fetch function, using the configured NTLM Auth options.
    *
-   * @param {string} url - the url to fetch from
+   * @param {string | Request} resource - the url or Request object to fetch from
    * @param {object} options - the fetch options
    * @returns {Promise<Response>} Promise object representing the http response
    */
-  async fetch (url, options = {}) {
-    // NTLM needs a Keep-Alive connection, so we set this as an agent for node-fetch
-    const agent = new http.Agent({
-      keepAlive: true
-    })
+  async fetch (resource, options = {}) {
+    const agent = this.proxyAgent()
 
-    logger.debug(`fetch - initial parameters. url: ${url} options: ${JSON.stringify(options)}`)
+    logger.debug(`fetch - initial parameters. url: ${resource} options: ${JSON.stringify(options)}`)
 
     // check whether it even needs auth
-    const response = await originalFetch(url, options)
+    const response = await originalFetch(resource, options)
     if (response.ok) {
-      logger.debug(`http resource ${url} does not require auth, skipping.`)
+      logger.debug(`http resource ${resource} does not require auth, skipping.`)
       return response
     }
 
     // check whether the response status is 401 Unauthorized
     if (!response.status === 401) {
-      logger.debug(`http resource ${url} did not return 401 Unauthorized, skipping.`)
+      logger.debug(`http resource ${resource} did not return 401 Unauthorized, skipping.`)
       return response
     }
 
     // check for header "WWW-Authenticate: NTLM"
     const wwwAuthenticate = response.headers.get('www-authenticate')
     if (!wwwAuthenticate && wwwAuthenticate.includes('NTLM')) {
-      logger.debug(`http resource ${url} did not have a 'WWW-Authenticate: NTLM' header, skipping.`)
+      logger.debug(`http resource ${resource} did not have a 'WWW-Authenticate: NTLM' header, skipping.`)
       return response
     }
 
     // if we got here, it's an NTLM challenge, so we proceed
-    const ntlmType2Challenge = await this.ntlmNegotiate(url, agent)
+    const ntlmType2Challenge = await this.ntlmNegotiate(resource, agent)
     logger.debug(`fetch - ntlmType2Challenge ${ntlmType2Challenge}`)
 
     // create a NTLM Type 3 authorization from the Type 2 challenge, and we respond to the challenge
-    const ntlmType3Authorization = ntlm.createType3Message(ntlmType2Challenge, this.authOpts)
+    const ntlmType3Authorization = ntlm.createType3Message(ntlmType2Challenge, this.authOptions)
     logger.debug(`fetch - ntlmType3Authorization ${ntlmType3Authorization}`)
 
     if (!options.headers) {
@@ -142,13 +152,12 @@ class NtlmFetch {
     }
     options.headers.Authorization = ntlmType3Authorization
 
-    logger.debug(`fetch - final parameters. url: ${url} options: ${JSON.stringify(options)}`)
+    logger.debug(`fetch - final parameters. url: ${resource} options: ${JSON.stringify(options)}`)
 
-    return originalFetch(url, {
+    return originalFetch(resource, {
       ...options,
       agent
-    }
-    )
+    })
   }
 }
 

@@ -9,9 +9,14 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-const fetch = jest.requireActual('node-fetch')
+const fetch = require('node-fetch')
 const queryString = require('query-string')
 const { createApiServer } = require('./server/api-server')
+
+// unmock node-fetch
+jest.mock('node-fetch', () =>
+  jest.requireActual('node-fetch')
+)
 
 test('api server test', async () => {
   const apiServer = await createApiServer()
