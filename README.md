@@ -91,21 +91,18 @@ The retries use exponential backoff strategy
 with defaults set to max of 3 retries and initial Delay as 100ms</p>
 </dd>
 <dt><a href="#ProxyFetch">ProxyFetch</a></dt>
-<dd><p>This provides a wrapper for fetch that facilitates NTLM Auth negotiation and authorization.</p>
+<dd><p>This provides a wrapper for fetch that facilitates proxy auth authorization.</p>
 </dd>
 </dl>
 
 ## Functions
 
 <dl>
-<dt><a href="#getProxyOptionsFromConfig">getProxyOptionsFromConfig()</a> ⇒ <code>object</code></dt>
+<dt><a href="#getProxyOptionsFromConfig">getProxyOptionsFromConfig()</a> ⇒ <code><a href="#ProxyAuthOptions">ProxyAuthOptions</a></code></dt>
 <dd><p>Gets the proxy options from the config.</p>
 </dd>
 <dt><a href="#createFetch">createFetch([proxyOptions])</a> ⇒ <code>function</code></dt>
 <dd><p>Return the appropriate Fetch function depending on proxy settings.</p>
-</dd>
-<dt><a href="#urlToHttpOptions">urlToHttpOptions(aUrl)</a> ⇒ <code>object</code></dt>
-<dd><p>Converts a URL to a suitable object for http request options.</p>
 </dd>
 </dl>
 
@@ -148,7 +145,7 @@ exponential backoff. Returns a Promise.
 <a name="ProxyFetch"></a>
 
 ## ProxyFetch
-This provides a wrapper for fetch that facilitates NTLM Auth negotiation and authorization.
+This provides a wrapper for fetch that facilitates proxy auth authorization.
 
 **Kind**: global class  
 
@@ -189,11 +186,11 @@ Fetch function, using the configured NTLM Auth options.
 
 <a name="getProxyOptionsFromConfig"></a>
 
-## getProxyOptionsFromConfig() ⇒ <code>object</code>
+## getProxyOptionsFromConfig() ⇒ [<code>ProxyAuthOptions</code>](#ProxyAuthOptions)
 Gets the proxy options from the config.
 
 **Kind**: global function  
-**Returns**: <code>object</code> - the proxy options  
+**Returns**: [<code>ProxyAuthOptions</code>](#ProxyAuthOptions) - the proxy options  
 <a name="createFetch"></a>
 
 ## createFetch([proxyOptions]) ⇒ <code>function</code>
@@ -204,22 +201,10 @@ Return the appropriate Fetch function depending on proxy settings.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| [proxyOptions] | <code>object</code> | the options for the proxy |
+| [proxyOptions] | [<code>ProxyAuthOptions</code>](#ProxyAuthOptions) | the options for the proxy |
 | proxyOptions.proxyUrl | <code>string</code> | the url for the proxy |
 | proxyOptions.username | <code>string</code> | the username for the proxy |
 | proxyOptions.password | <code>string</code> | the password for the proxy |
-
-<a name="urlToHttpOptions"></a>
-
-## urlToHttpOptions(aUrl) ⇒ <code>object</code>
-Converts a URL to a suitable object for http request options.
-
-**Kind**: global function  
-**Returns**: <code>object</code> - an object to pass for http request options  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| aUrl | <code>string</code> | the url to parse |
 
 <a name="ProxyAuthOptions"></a>
 
@@ -231,10 +216,9 @@ Auth Options.
 
 | Name | Type | Description |
 | --- | --- | --- |
+| proxyUrl | <code>string</code> | the proxy's url |
 | username | <code>string</code> | the username |
 | password | <code>string</code> | the password |
-| [domain] | <code>string</code> | (NTLM auth only) the Active Directory domain |
-| [workstation] | <code>string</code> | (NTLM auth only) the workstation name |
 
 ### Debug Logs
 

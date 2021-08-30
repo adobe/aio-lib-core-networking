@@ -23,14 +23,13 @@ const http = require('http')
  * Auth Options.
  *
  * @typedef {object} ProxyAuthOptions
+ * @property {string} proxyUrl - the proxy's url
  * @property {string} username - the username
  * @property {string} password - the password
- * @property {string} [domain] - (NTLM auth only) the Active Directory domain
- * @property {string} [workstation] - (NTLM auth only) the workstation name
  */
 
 /**
- * This provides a wrapper for fetch that facilitates NTLM Auth negotiation and authorization.
+ * This provides a wrapper for fetch that facilitates proxy auth authorization.
  */
 class ProxyFetch {
   /**

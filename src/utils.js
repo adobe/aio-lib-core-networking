@@ -14,6 +14,7 @@ const url = require('url')
 /**
  * Converts a URL to a suitable object for http request options.
  *
+ * @private
  * @param {string} aUrl the url to parse
  * @returns {object} an object to pass for http request options
  */

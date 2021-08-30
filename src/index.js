@@ -16,10 +16,12 @@ const config = require('@adobe/aio-lib-core-config')
 const loggerNamespace = '@adobe/aio-lib-core-networking/index'
 const logger = require('@adobe/aio-lib-core-logging')(loggerNamespace, { level: process.env.LOG_LEVEL })
 
+/* global ProxyAuthOptions */
+
 /**
  * Gets the proxy options from the config.
  *
- * @returns {object} the proxy options
+ * @returns {ProxyAuthOptions} the proxy options
  */
 function getProxyOptionsFromConfig () {
   logger.debug('getProxyOptionsFromConfig: getting proxy options from the config')
@@ -47,7 +49,7 @@ function getProxyOptionsFromConfig () {
 /**
  * Return the appropriate Fetch function depending on proxy settings.
  *
- * @param {object} [proxyOptions] the options for the proxy
+ * @param {ProxyAuthOptions} [proxyOptions] the options for the proxy
  * @param {string} proxyOptions.proxyUrl the url for the proxy
  * @param {string} proxyOptions.username the username for the proxy
  * @param {string} proxyOptions.password the password for the proxy

@@ -19,16 +19,14 @@ declare class HttpExponentialBackoff {
 
 /**
  * Auth Options.
+ * @property proxyUrl - the proxy's url
  * @property username - the username
  * @property password - the password
- * @property [domain] - (NTLM auth only) the Active Directory domain
- * @property [workstation] - (NTLM auth only) the workstation name
  */
 declare type ProxyAuthOptions = {
+    proxyUrl: string;
     username: string;
     password: string;
-    domain?: string;
-    workstation?: string;
 };
 
 /**
@@ -55,7 +53,7 @@ declare class ProxyFetch {
  * Gets the proxy options from the config.
  * @returns the proxy options
  */
-declare function getProxyOptionsFromConfig(): any;
+declare function getProxyOptionsFromConfig(): ProxyAuthOptions;
 
 /**
  * Return the appropriate Fetch function depending on proxy settings.
@@ -72,11 +70,4 @@ declare function createFetch(proxyOptions?: {
 }): (...params: any[]) => any;
 
 declare module "@adobe/aio-lib-core-networking" { }
-
-/**
- * Converts a URL to a suitable object for http request options.
- * @param aUrl - the url to parse
- * @returns an object to pass for http request options
- */
-declare function urlToHttpOptions(aUrl: string): any;
 

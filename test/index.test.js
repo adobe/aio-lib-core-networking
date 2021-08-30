@@ -10,8 +10,10 @@ governing permissions and limitations under the License.
 */
 
 const { HttpExponentialBackoff, ProxyFetch, createFetch, getProxyOptionsFromConfig } = require('../src/index')
-const config = require('@adobe/aio-lib-core-config')
+const configMock = require('@adobe/aio-lib-core-config')
+const fetchMock = require('node-fetch')
 
+jest.mock('node-fetch')
 jest.mock('@adobe/aio-lib-core-config')
 
 test('exports', () => {
@@ -30,7 +32,7 @@ test('exports', () => {
 
 describe('getProxyOptionsFromConfig', () => {
   afterEach(() => {
-    config.get.mockImplementation(() => undefined)
+    configMock.get.mockImplementation(() => undefined)
   })
 
   test('no config set', () => {
@@ -40,7 +42,7 @@ describe('getProxyOptionsFromConfig', () => {
 
   test('proxy url set (no username, no password)', () => {
     const proxyUrl = 'http://foo.bar'
-    config.get.mockReturnValueOnce(proxyUrl)
+    configMock.get.mockReturnValueOnce(proxyUrl)
 
     const result = getProxyOptionsFromConfig()
     expect(result).toEqual({ proxyUrl })
@@ -48,7 +50,7 @@ describe('getProxyOptionsFromConfig', () => {
 
   test('proxy url set, username set, no password', () => {
     const proxyUrl = 'http://foo.bar'
-    config.get
+    configMock.get
       .mockReturnValueOnce(proxyUrl)
       .mockReturnValueOnce('myuser')
       .mockReturnValueOnce(undefined)
@@ -59,7 +61,7 @@ describe('getProxyOptionsFromConfig', () => {
 
   test('proxy url set, no username set, password set', () => {
     const proxyUrl = 'http://foo.bar'
-    config.get
+    configMock.get
       .mockReturnValueOnce(proxyUrl)
       .mockReturnValueOnce(undefined)
       .mockReturnValueOnce('mypassword')
@@ -73,7 +75,7 @@ describe('getProxyOptionsFromConfig', () => {
     const username = 'myuser'
     const password = 'mypassword'
 
-    config.get
+    configMock.get
       .mockReturnValueOnce(proxyUrl)
       .mockReturnValueOnce(username)
       .mockReturnValueOnce(password)
@@ -83,10 +85,65 @@ describe('getProxyOptionsFromConfig', () => {
   })
 })
 
-// describe('createFetch', () => {
-//   test('default', () => {
-//   })
+describe('createFetch', () => {
+  const mockProxyFetchFetch = jest.fn()
 
-//   test('proxy set via constructor', () => {
-//   })
-// })
+  beforeEach(() => {
+    jest.spyOn(ProxyFetch.prototype, 'fetch').mockImplementation(mockProxyFetchFetch)
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  test('default', async () => {
+    const body = 'this is some body text'
+    const status = 200
+    fetchMock.mockResponse(body, { status })
+
+    // this should use node-fetch
+    const newFetch = createFetch()
+    const response = await newFetch('http://some.server')
+    expect(response.body.toString()).toEqual(body)
+    expect(response.status).toEqual(status)
+  })
+
+  test('proxy set via constructor', async () => {
+    const body = 'this is some proxyfetch text'
+    const result = {
+      body,
+      status: 200
+    }
+    mockProxyFetchFetch.mockResolvedValue(result)
+
+    // this should use ProxyFetch (set proxy options as the constructor parameter)
+    const newFetch = createFetch({ proxyUrl: 'http://some.proxy' })
+    const response = await newFetch('http://some.server')
+    expect(response.body.toString()).toEqual(body)
+    expect(response.status).toEqual(result.status)
+  })
+
+  test('proxy set via config', async () => {
+    const body = 'this is some proxyfetch text'
+    const result = {
+      body,
+      status: 200
+    }
+    mockProxyFetchFetch.mockResolvedValue(result)
+
+    const proxyUrl = 'http://foo.bar'
+    const username = 'myuser'
+    const password = 'mypassword'
+
+    configMock.get
+      .mockReturnValueOnce(proxyUrl)
+      .mockReturnValueOnce(username)
+      .mockReturnValueOnce(password)
+
+    // this should use ProxyFetch (no proxy options as the constructor parameter)
+    const newFetch = createFetch()
+    const response = await newFetch('http://some.server')
+    expect(response.body.toString()).toEqual(body)
+    expect(response.status).toEqual(result.status)
+  })
+})
