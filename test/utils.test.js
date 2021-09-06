@@ -129,6 +129,11 @@ describe('createFetch', () => {
     const response = await newFetch('http://some.server')
     expect(response.body.toString()).toEqual(body)
     expect(response.status).toEqual(status)
+
+    // the fetch is node-fetch, it should have Request, Response, Headers classes
+    expect(typeof newFetch.Request).toEqual('function')
+    expect(typeof newFetch.Response).toEqual('function')
+    expect(typeof newFetch.Headers).toEqual('function')
   })
 
   test('proxy set via constructor', async () => {
@@ -144,6 +149,11 @@ describe('createFetch', () => {
     const response = await newFetch('http://some.server')
     expect(response.body.toString()).toEqual(body)
     expect(response.status).toEqual(result.status)
+
+    // the fetch is ProxyFetch, it should have Request, Response, Headers classes
+    expect(typeof newFetch.Request).toEqual('function')
+    expect(typeof newFetch.Response).toEqual('function')
+    expect(typeof newFetch.Headers).toEqual('function')
   })
 
   test('proxy set via config', async () => {

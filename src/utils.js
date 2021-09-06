@@ -55,7 +55,7 @@ function getProxyOptionsFromConfig () {
  * @returns {Function} the Fetch API function
  */
 function createFetch (proxyOptions = getProxyOptionsFromConfig()) {
-  return async (resource, options) => {
+  const fn = async (resource, options) => {
     if (proxyOptions) {
       // in this closure: for fetch-retry, if we don't require it dynamically here, ProxyFetch will be an empty object
       const ProxyFetch = require('./ProxyFetch')
@@ -65,6 +65,11 @@ function createFetch (proxyOptions = getProxyOptionsFromConfig()) {
       return originalFetch(resource, options)
     }
   }
+  const { Request, Response, Headers } = originalFetch
+  fn.Request = Request
+  fn.Response = Response
+  fn.Headers = Headers
+  return fn
 }
 
 /**
