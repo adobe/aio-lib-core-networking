@@ -41,18 +41,13 @@ class ProxyFetch {
     logger.debug(`constructor - authOptions: ${JSON.stringify(authOptions)}`)
     const { proxyUrl, username, password } = authOptions
 
-    const initErrors = []
     if (!proxyUrl) {
-      initErrors.push('proxyUrl')
+      const sdkDetails = { proxyUrl, username, password }
+      throw new codes.ERROR_PROXY_FETCH_INITIALIZATION({ sdkDetails, messageValues: 'proxyUrl' })
     }
 
     if (!username || !password) {
       logger.debug('username or password not set, proxy is anonymous.')
-    }
-
-    if (initErrors.length) {
-      const sdkDetails = { proxyUrl, username, password }
-      throw new codes.ERROR_PROXY_FETCH_INITIALIZATION({ sdkDetails, messageValues: `${initErrors.join(', ')}` })
     }
 
     this.authOptions = authOptions
