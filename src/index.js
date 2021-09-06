@@ -13,7 +13,6 @@ const HttpExponentialBackoff = require('./HttpExponentialBackoff')
 const ProxyFetch = require('./ProxyFetch')
 const { createFetch, getProxyOptionsFromConfig } = require('./utils')
 
-/** @module @adobe/aio-lib-core-networking */
 module.exports = {
   HttpExponentialBackoff,
   ProxyFetch,

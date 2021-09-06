@@ -75,13 +75,6 @@ proxyFetch = createFetch({ proxyUrl: 'http://my.proxy:8080', username: 'admin', 
 const simpleFetch = createFetch()
 ```
 
-## Modules
-
-<dl>
-<dt><a href="#module_@adobe/aio-lib-core-networking">@adobe/aio-lib-core-networking</a></dt>
-<dd></dd>
-</dl>
-
 ## Classes
 
 <dl>
@@ -109,14 +102,14 @@ with defaults set to max of 3 retries and initial Delay as 100ms</p>
 ## Typedefs
 
 <dl>
+<dt><a href="#RetryOptions">RetryOptions</a> : <code>object</code></dt>
+<dd><p>Fetch Retry Options</p>
+</dd>
 <dt><a href="#ProxyAuthOptions">ProxyAuthOptions</a> : <code>object</code></dt>
-<dd><p>Auth Options.</p>
+<dd><p>Proxy Auth Options</p>
 </dd>
 </dl>
 
-<a name="module_@adobe/aio-lib-core-networking"></a>
-
-## @adobe/aio-lib-core-networking
 <a name="HttpExponentialBackoff"></a>
 
 ## HttpExponentialBackoff
@@ -127,7 +120,7 @@ with defaults set to max of 3 retries and initial Delay as 100ms
 **Kind**: global class  
 <a name="HttpExponentialBackoff+exponentialBackoff"></a>
 
-### httpExponentialBackoff.exponentialBackoff(url, requestOptions, retryOptions, [retryOn], [retryDelay]) ⇒ <code>Promise.&lt;Response&gt;</code>
+### httpExponentialBackoff.exponentialBackoff(url, requestOptions, [retryOptions], [retryOn], [retryDelay]) ⇒ <code>Promise.&lt;Response&gt;</code>
 This function will retry connecting to a url end-point, with
 exponential backoff. Returns a Promise.
 
@@ -137,10 +130,10 @@ exponential backoff. Returns a Promise.
 | Param | Type | Description |
 | --- | --- | --- |
 | url | <code>string</code> | endpoint url |
-| requestOptions | <code>object</code> | request options |
-| retryOptions | <code>object</code> | retry options with keys being maxRetries and initialDelay in ms |
-| [retryOn] | <code>function</code> \| <code>Array</code> | Optional Function or Array. If provided, will be used instead of the default |
-| [retryDelay] | <code>function</code> \| <code>number</code> | Optional Function or number. If provided, will be used instead of the default |
+| requestOptions | <code>object</code> \| <code>Request</code> | request options |
+| [retryOptions] | [<code>RetryOptions</code>](#RetryOptions) | (optional) retry options |
+| [retryOn] | <code>function</code> \| <code>Array</code> | (optional) Function or Array. If provided, will be used instead of the default |
+| [retryDelay] | <code>function</code> \| <code>number</code> | (optional) Function or number. If provided, will be used instead of the default |
 
 <a name="ProxyFetch"></a>
 
@@ -206,10 +199,24 @@ Return the appropriate Fetch function depending on proxy settings.
 | proxyOptions.username | <code>string</code> | the username for the proxy |
 | proxyOptions.password | <code>string</code> | the password for the proxy |
 
+<a name="RetryOptions"></a>
+
+## RetryOptions : <code>object</code>
+Fetch Retry Options
+
+**Kind**: global typedef  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| maxRetries | <code>number</code> | the maximum number of retries to try (default:3) |
+| initialDelayInMillis | <code>number</code> | the initial delay in milliseconds (default:100ms) |
+| proxy | [<code>ProxyAuthOptions</code>](#ProxyAuthOptions) | the (optional) proxy auth options |
+
 <a name="ProxyAuthOptions"></a>
 
 ## ProxyAuthOptions : <code>object</code>
-Auth Options.
+Proxy Auth Options
 
 **Kind**: global typedef  
 **Properties**

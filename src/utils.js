@@ -14,7 +14,6 @@ const originalFetch = require('node-fetch')
 const config = require('@adobe/aio-lib-core-config')
 const loggerNamespace = '@adobe/aio-lib-core-networking/utils'
 const logger = require('@adobe/aio-lib-core-logging')(loggerNamespace, { level: process.env.LOG_LEVEL })
-const ProxyFetch = require('./ProxyFetch')
 
 /* global ProxyAuthOptions */
 
@@ -56,8 +55,10 @@ function getProxyOptionsFromConfig () {
  * @returns {Function} the Fetch API function
  */
 function createFetch (proxyOptions = getProxyOptionsFromConfig()) {
-  return (resource, options) => {
+  return async (resource, options) => {
     if (proxyOptions) {
+      // in this closure: for fetch-retry, if we don't require it dynamically here, ProxyFetch will be an empty object
+      const ProxyFetch = require('./ProxyFetch')
       const proxyFetch = new ProxyFetch(proxyOptions)
       return proxyFetch.fetch(resource, options)
     } else {

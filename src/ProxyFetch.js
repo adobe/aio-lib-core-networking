@@ -20,7 +20,7 @@ const http = require('http')
 /* global Response, Request */
 
 /**
- * Auth Options.
+ * Proxy Auth Options
  *
  * @typedef {object} ProxyAuthOptions
  * @property {string} proxyUrl - the proxy's url

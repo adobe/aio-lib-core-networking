@@ -10,6 +10,7 @@ governing permissions and limitations under the License.
 */
 
 const ProxyFetch = require('../src/ProxyFetch')
+const HttpExponentialBackoff = require('../src/HttpExponentialBackoff')
 const { codes } = require('../src/SDKErrors')
 const queryString = require('query-string')
 const { createHttpProxy } = require('./server/http-proxy')
@@ -120,5 +121,49 @@ describe('proxy (basic auth)', () => {
     expect(response.ok).toEqual(false)
     expect(response.status).toEqual(401)
     expect(response.headers.get('www-authenticate')).toEqual('Basic')
+  })
+})
+
+describe('HttpExponentialBackoff with proxy', () => {
+  let proxyServer, proxyCleanup, proxyUrl
+
+  beforeAll(async () => {
+    [proxyServer, proxyCleanup] = await createHttpProxy()
+
+    const proxyServerAddress = proxyServer.address()
+    proxyUrl = `http://${proxyServerAddress.address}:${proxyServerAddress.port}`
+  })
+
+  afterAll(() => {
+    proxyServer.close()
+    proxyCleanup()
+  })
+
+  test('api server success', async () => {
+    const apiServer = await createApiServer()
+    const apiServerAddress = apiServer.address()
+    const queryObject = { foo: 'bar' }
+
+    const testUrl = `http://${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
+
+    const fetchRetry = new HttpExponentialBackoff()
+    const response = await fetchRetry.exponentialBackoff(testUrl, { method: 'GET' }, {
+      proxy: { proxyUrl }
+    })
+    const json = await response.json()
+    expect(json).toStrictEqual(queryObject)
+    apiServer.close()
+  })
+
+  test('api server failure', async () => {
+    // api server is not instantiated
+    const testUrl = 'http://localhost:3003/mirror/?foo=bar'
+    const fetchRetry = new HttpExponentialBackoff()
+    const response = await fetchRetry.exponentialBackoff(testUrl, { method: 'GET' }, {
+      proxy: { proxyUrl },
+      maxRetries: 2
+    }, [], 0) // retryDelay must be zero for test timings
+    expect(response.ok).toEqual(false)
+    expect(response.status).toEqual(503)
   })
 })

@@ -12,12 +12,19 @@ governing permissions and limitations under the License.
 const DEFAULT_MAX_RETRIES = 3
 const DEFAULY_INITIAL_DELAY_MS = 100
 const loggerNamespace = '@adobe/aio-lib-core-networking:HttpExponentialBackoff'
-const logger = require('@adobe/aio-lib-core-logging')(
-  loggerNamespace, { level: process.env.LOG_LEVEL })
-const originalFetch = require('node-fetch')
-const fetch = require('fetch-retry')(originalFetch)
+const logger = require('@adobe/aio-lib-core-logging')(loggerNamespace, { level: process.env.LOG_LEVEL })
+const { createFetch } = require('./utils')
 
-/* global Response */ // for linter
+/* global Request, Response, ProxyAuthOptions */ // for linter
+
+/**
+ * Fetch Retry Options
+ *
+ * @typedef {object} RetryOptions
+ * @property {number} maxRetries the maximum number of retries to try (default:3)
+ * @property {number} initialDelayInMillis the initial delay in milliseconds (default:100ms)
+ * @property {ProxyAuthOptions} proxy  the (optional) proxy auth options
+ */
 
 /**
  * This class provides methods to implement fetch with retries.
@@ -30,20 +37,21 @@ class HttpExponentialBackoff {
    * exponential backoff. Returns a Promise.
    *
    * @param {string} url endpoint url
-   * @param {object} requestOptions request options
-   * @param {object} retryOptions retry options with keys being maxRetries and initialDelay in ms
-   * @param {Function|Array} [retryOn] Optional Function or Array. If provided, will be used instead of the default
-   * @param {Function|number} [retryDelay] Optional Function or number. If provided, will be used instead of the default
+   * @param {object|Request} requestOptions request options
+   * @param {RetryOptions} [retryOptions] (optional) retry options
+   * @param {Function|Array} [retryOn] (optional) Function or Array. If provided, will be used instead of the default
+   * @param {Function|number} [retryDelay] (optional) Function or number. If provided, will be used instead of the default
    * @returns {Promise<Response>} Promise object representing the http response
    */
   async exponentialBackoff (url, requestOptions, retryOptions = {},
     retryOn, retryDelay) {
     const {
       maxRetries = DEFAULT_MAX_RETRIES,
-      initialDelayInMillis = DEFAULY_INITIAL_DELAY_MS
+      initialDelayInMillis = DEFAULY_INITIAL_DELAY_MS,
+      proxy
     } = retryOptions
     return this.exponentialBackoffHelper(url, requestOptions,
-      { maxRetries, initialDelayInMillis }, retryOn, retryDelay)
+      { maxRetries, initialDelayInMillis, proxy }, retryOn, retryDelay)
   }
 
   /**
@@ -53,20 +61,21 @@ class HttpExponentialBackoff {
     * Fetch-Retry honors only one of retryOn or retries options in the request.
     *
     * @param {string} url endpoint url
-    * @param {object} requestOptions request options
-    * @param {object} retryOptions retry options with keys being maxRetries and initialDelay in ms
+    * @param {Request} requestOptions request options
+    * @param {RetryOptions} retryOptions retry options with keys being maxRetries and initialDelay in ms
     * @param {Function|Array} retryOn Optional Function or Array. If provided, will be used instead of the default
     * @param {Function|number} retryDelay Optional Function or number. If provided, will be used instead of the default
     * @private
     */
-  async exponentialBackoffHelper (url, requestOptions,
-    retryOptions, retryOn, retryDelay) {
+  async exponentialBackoffHelper (url, requestOptions, retryOptions, retryOn, retryDelay) {
     const retryFunctions = this.__getRetryOptions(retryOptions.maxRetries, retryOptions.initialDelayInMillis)
     requestOptions.retries = retryOptions.maxRetries
     requestOptions.retryOn = retryOn || retryFunctions.retryOn
     requestOptions.retryDelay = retryDelay || retryFunctions.retryDelay
-    const response = await fetch(url, requestOptions)
-    return response
+
+    const proxyFetch = createFetch(retryOptions.proxy)
+    const fetch = require('fetch-retry')(proxyFetch)
+    return fetch(url, requestOptions)
   }
 
   /**
