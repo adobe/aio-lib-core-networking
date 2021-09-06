@@ -10,6 +10,61 @@ governing permissions and limitations under the License.
 */
 
 const url = require('url')
+const originalFetch = require('node-fetch')
+const config = require('@adobe/aio-lib-core-config')
+const loggerNamespace = '@adobe/aio-lib-core-networking/utils'
+const logger = require('@adobe/aio-lib-core-logging')(loggerNamespace, { level: process.env.LOG_LEVEL })
+const ProxyFetch = require('./ProxyFetch')
+
+/* global ProxyAuthOptions */
+
+/**
+ * Gets the proxy options from the config.
+ *
+ * @returns {ProxyAuthOptions} the proxy options
+ */
+function getProxyOptionsFromConfig () {
+  logger.debug('getProxyOptionsFromConfig: getting proxy options from the config')
+
+  let proxyOptions = null
+  const proxyUrl = config.get('proxy.url')
+  const username = config.get('proxy.username')
+  const password = config.get('proxy.password')
+
+  if (!proxyUrl) {
+    logger.debug('getProxyOptionsFromConfig: proxy.url not set. Proxy will not be used.')
+  } else {
+    proxyOptions = { proxyUrl }
+    logger.debug(`getProxyOptionsFromConfig - proxy.url ${proxyUrl}, proxy.username: ${username}, proxy.password: ${password}`)
+    if (!username || !password) {
+      logger.debug('getProxyOptionsFromConfig: username or password not set, proxy is anonymous.')
+    } else {
+      proxyOptions = { ...proxyOptions, username, password }
+    }
+  }
+
+  return proxyOptions
+}
+
+/**
+ * Return the appropriate Fetch function depending on proxy settings.
+ *
+ * @param {ProxyAuthOptions} [proxyOptions] the options for the proxy
+ * @param {string} proxyOptions.proxyUrl the url for the proxy
+ * @param {string} proxyOptions.username the username for the proxy
+ * @param {string} proxyOptions.password the password for the proxy
+ * @returns {Function} the Fetch API function
+ */
+function createFetch (proxyOptions = getProxyOptionsFromConfig()) {
+  return (resource, options) => {
+    if (proxyOptions) {
+      const proxyFetch = new ProxyFetch(proxyOptions)
+      return proxyFetch.fetch(resource, options)
+    } else {
+      return originalFetch(resource, options)
+    }
+  }
+}
 
 /**
  * Converts a URL to a suitable object for http request options.
@@ -39,5 +94,7 @@ function urlToHttpOptions (aUrl) {
 }
 
 module.exports = {
-  urlToHttpOptions
+  urlToHttpOptions,
+  createFetch,
+  getProxyOptionsFromConfig
 }
