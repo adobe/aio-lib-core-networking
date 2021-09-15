@@ -13,7 +13,7 @@ const ProxyFetch = require('../src/ProxyFetch')
 const HttpExponentialBackoff = require('../src/HttpExponentialBackoff')
 const { codes } = require('../src/SDKErrors')
 const queryString = require('query-string')
-const { createHttpProxy } = require('./server/http-proxy')
+const { createHttpsProxy } = require('./server/proxy')
 const { createApiServer } = require('./server/api-server')
 
 // unmock node-fetch
@@ -30,28 +30,26 @@ test('proxy init error', () => {
 })
 
 describe('proxy (no auth)', () => {
-  let proxyServer, proxyCleanup, proxyFetch
+  let proxyServer, proxyFetch
 
   beforeAll(async () => {
-    [proxyServer, proxyCleanup] = await createHttpProxy()
-
-    const proxyServerAddress = proxyServer.address()
-    const proxyUrl = `http://${proxyServerAddress.address}:${proxyServerAddress.port}`
-    proxyFetch = new ProxyFetch({ proxyUrl })
+    proxyServer = await createHttpsProxy()
+    const proxyUrl = proxyServer.url
+    proxyFetch = new ProxyFetch({ proxyUrl, rejectUnauthorized: false })
   })
 
-  afterAll(() => {
-    proxyServer.close()
-    proxyCleanup()
+  afterAll(async () => {
+    await proxyServer.stop()
   })
 
   test('api server success', async () => {
-    const apiServer = await createApiServer()
+    const apiServer = await createApiServer({ useSsl: true })
     const apiServerAddress = apiServer.address()
     const queryObject = { foo: 'bar' }
 
-    const testUrl = `http://${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
+    const testUrl = `https://localhost:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
     const response = await proxyFetch.fetch(testUrl)
+
     const json = await response.json()
     expect(json).toStrictEqual(queryObject)
     apiServer.close()
@@ -59,30 +57,27 @@ describe('proxy (no auth)', () => {
 
   test('api server failure', async () => {
     // api server is not instantiated
-    const testUrl = 'http://localhost:3001/mirror/?foo=bar'
+    const testUrl = 'https://localhost:3000/mirror/?foo=bar'
     const response = await proxyFetch.fetch(testUrl)
     expect(response.ok).toEqual(false)
-    expect(response.status).toEqual(503)
+    expect(response.status).toEqual(502)
   })
 })
 
 describe('proxy (basic auth)', () => {
-  let proxyServer, proxyCleanup, proxyUrl
+  let proxyServer, proxyUrl
   let apiServer, apiServerAddress
 
   beforeAll(async () => {
-    [proxyServer, proxyCleanup] = await createHttpProxy({ useBasicAuth: true }) // admin:secret
+    proxyServer = await createHttpsProxy({ useBasicAuth: true })
+    proxyUrl = proxyServer.url
 
-    const proxyServerAddress = proxyServer.address()
-    proxyUrl = `http://${proxyServerAddress.address}:${proxyServerAddress.port}`
-
-    apiServer = await createApiServer()
+    apiServer = await createApiServer({ useSsl: true })
     apiServerAddress = apiServer.address()
   })
 
   afterAll(() => {
-    proxyServer.close()
-    proxyCleanup()
+    proxyServer.stop()
     apiServer.close()
   })
 
@@ -91,15 +86,14 @@ describe('proxy (basic auth)', () => {
 
     const username = 'admin'
     const password = 'secret'
-    // we only set headers here for our test proxy server which doesn't handle the Proxy-Authorization header
-    // see https://github.com/LionC/express-basic-auth/pull/39
     const headers = {
-      Authorization: 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
+      'Proxy-Authorization': 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
     }
-    const proxyFetch = new ProxyFetch({ proxyUrl, username, password })
+    const proxyFetch = new ProxyFetch({ proxyUrl, username, password, rejectUnauthorized: false })
 
-    const testUrl = `http://${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
+    const testUrl = `https://localhost:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
     const response = await proxyFetch.fetch(testUrl, { headers })
+    expect(response.ok).toEqual(true)
     const json = await response.json()
     expect(json).toStrictEqual(queryObject)
   })
@@ -109,42 +103,36 @@ describe('proxy (basic auth)', () => {
 
     const username = 'foo'
     const password = 'dont-know-the-password'
-    // we only set headers here for our test proxy server which doesn't handle the Proxy-Authorization header
-    // see https://github.com/LionC/express-basic-auth/pull/39
     const headers = {
-      Authorization: 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
+      'Proxy-Authorization': 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
     }
-    const proxyFetch = new ProxyFetch({ proxyUrl, username, password })
+    const proxyFetch = new ProxyFetch({ proxyUrl, username, password, rejectUnauthorized: false })
 
-    const testUrl = `http://${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
+    const testUrl = `https://localhost:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
     const response = await proxyFetch.fetch(testUrl, { headers })
     expect(response.ok).toEqual(false)
-    expect(response.status).toEqual(401)
-    expect(response.headers.get('www-authenticate')).toEqual('Basic')
+    expect(response.status).toEqual(403)
   })
 })
 
 describe('HttpExponentialBackoff with proxy', () => {
-  let proxyServer, proxyCleanup, proxyUrl
+  let proxyServer, proxyUrl
 
   beforeAll(async () => {
-    [proxyServer, proxyCleanup] = await createHttpProxy()
-
-    const proxyServerAddress = proxyServer.address()
-    proxyUrl = `http://${proxyServerAddress.address}:${proxyServerAddress.port}`
+    proxyServer = await createHttpsProxy()
+    proxyUrl = proxyServer.url
   })
 
   afterAll(() => {
-    proxyServer.close()
-    proxyCleanup()
+    proxyServer.stop()
   })
 
   test('api server success', async () => {
-    const apiServer = await createApiServer()
+    const apiServer = await createApiServer({ useSsl: true })
     const apiServerAddress = apiServer.address()
     const queryObject = { foo: 'bar' }
 
-    const testUrl = `http://${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
+    const testUrl = `https://localhost:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
 
     const fetchRetry = new HttpExponentialBackoff()
     const response = await fetchRetry.exponentialBackoff(testUrl, { method: 'GET' }, {
@@ -157,13 +145,13 @@ describe('HttpExponentialBackoff with proxy', () => {
 
   test('api server failure', async () => {
     // api server is not instantiated
-    const testUrl = 'http://localhost:3003/mirror/?foo=bar'
+    const testUrl = 'https://localhost:3002/mirror/?foo=bar'
     const fetchRetry = new HttpExponentialBackoff()
     const response = await fetchRetry.exponentialBackoff(testUrl, { method: 'GET' }, {
       proxy: { proxyUrl },
       maxRetries: 2
     }, [], 0) // retryDelay must be zero for test timings
     expect(response.ok).toEqual(false)
-    expect(response.status).toEqual(503)
+    expect(response.status).toEqual(502)
   })
 })

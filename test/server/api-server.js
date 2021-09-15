@@ -11,26 +11,38 @@ governing permissions and limitations under the License.
 const loggerNamespace = '@adobe/aio-lib-core-networking:test/api-server'
 const logger = require('@adobe/aio-lib-core-logging')(loggerNamespace, { level: process.env.LOG_LEVEL })
 const express = require('express')
+const mockttp = require('mockttp')
+const https = require('https')
+const http = require('http')
 
 /**
  * Create a simple API server.
  *
  * @param {object} options the options object
- * @param {number} [options.port=3001] the port number to listen to
+ * @param {number} [options.port=3000] the port number to listen to
+ * @param {number} [options.useSsl=false] use ssl (https)
  * @returns {object} the HTTP proxy server object
  */
 async function createApiServer (options = {}) {
-  const { port = 3001 } = options
+  const { port = 3000, useSsl = false } = options
 
   const app = express()
+  let server
 
   app.get('/mirror', function (req, res) {
-    res.json({
+    return res.status(200).json({
       ...req.query
     })
   })
 
-  const server = await app.listen(port, 'localhost')
+  if (useSsl) {
+    const httpsOptions = await mockttp.generateCACertificate()
+
+    server = https.createServer(httpsOptions, app).listen(port, 'localhost')
+  } else {
+    server = http.createServer(app).listen(port, 'localhost')
+  }
+
   return new Promise(resolve => {
     server.on('listening', () => {
       logger.debug(`API server started on port ${server.address().port} at ${server.address().address}`)

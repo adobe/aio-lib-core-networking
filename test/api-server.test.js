@@ -9,6 +9,7 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
+const https = require('https')
 const fetch = require('node-fetch')
 const queryString = require('query-string')
 const { createApiServer } = require('./server/api-server')
@@ -18,7 +19,7 @@ jest.mock('node-fetch', () =>
   jest.requireActual('node-fetch')
 )
 
-test('api server test', async () => {
+test('api server test (http)', async () => {
   const apiServer = await createApiServer()
   const apiServerAddress = apiServer.address()
 
@@ -33,8 +34,30 @@ test('api server test', async () => {
     const response = await fetch(testUrl)
     const json = await response.json()
     expect(json).toStrictEqual(queryObject)
-  } catch (e) {
-    console.error(e)
+  } finally {
+    apiServer.close()
+  }
+})
+
+test('api server test (https)', async () => {
+  const apiServer = await createApiServer({ useSsl: true })
+  const apiServerAddress = apiServer.address()
+
+  // query strings values are always strings (when parsed, and in this case mirrored)
+  const queryObject = {
+    foo: 'bar',
+    abc: '123'
+  }
+
+  try {
+    const testUrl = `https://${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
+    const response = await fetch(testUrl, {
+      agent: new https.Agent({
+        rejectUnauthorized: false
+      })
+    })
+    const json = await response.json()
+    expect(json).toStrictEqual(queryObject)
   } finally {
     apiServer.close()
   }

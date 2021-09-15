@@ -13,7 +13,8 @@ const loggerNamespace = '@adobe/aio-lib-core-networking:ProxyFetch'
 const logger = require('@adobe/aio-lib-core-logging')(loggerNamespace, { level: process.env.LOG_LEVEL })
 const originalFetch = require('node-fetch')
 const { codes } = require('./SDKErrors')
-const HttpProxyAgent = require('proxy-agent')
+const HttpProxyAgent = require('http-proxy-agent')
+const HttpsProxyAgent = require('https-proxy-agent')
 const { urlToHttpOptions } = require('./utils')
 const http = require('http')
 
@@ -60,14 +61,23 @@ class ProxyFetch {
    * @returns {http.Agent} a http.Agent for basic auth proxy
    */
   proxyAgent () {
-    const { proxyUrl, username, password } = this.authOptions
+    const { proxyUrl, username, password, rejectUnauthorized = true } = this.authOptions
     const proxyOpts = urlToHttpOptions(proxyUrl)
 
     if (!proxyOpts.auth && username && password) {
       logger.debug('username and password not set in proxy url, using credentials passed in the constructor.')
       proxyOpts.auth = `${username}:${password}`
     }
-    return new HttpProxyAgent(proxyOpts)
+
+    // the passing on of this property to the underlying implementation only works on https-proxy-agent@2.2.4
+    // this is only used for unit-tests and passed in the constructor
+    proxyOpts.rejectUnauthorized = rejectUnauthorized
+
+    if (proxyOpts.protocol.startsWith('https')) {
+      return new HttpsProxyAgent(proxyOpts)
+    } else {
+      return new HttpProxyAgent(proxyOpts)
+    }
   }
 
   /**
