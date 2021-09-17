@@ -76,20 +76,18 @@ async function generateCertAndAddToRootCAs () {
  * @param {HttpOptions} httpOptions the http proxy options
  * @returns {Promise<mockttp.Mockttp>} the proxy server instance
  */
-function setupServerRules (server, httpOptions = {}) {
+function setupServerRules (server, httpOptions) {
   const { useBasicAuth = false, username = 'admin', password = 'secret' } = httpOptions
+  const passThroughOptions = { ignoreHostHttpsErrors: ['localhost', '127.0.0.1'] }
+
   if (!useBasicAuth) {
-    server.anyRequest().thenPassThrough({
-      ignoreHostHttpsErrors: ['localhost', '127.0.0.1']
-    })
+    server.anyRequest().thenPassThrough(passThroughOptions)
   } else {
     const authorization = 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
     // this rule makes the request pass through (authorization correct)
     server.anyRequest()
       .withHeaders({ 'Proxy-Authorization': authorization })
-      .thenPassThrough({
-        ignoreHostHttpsErrors: ['localhost', '127.0.0.1']
-      })
+      .thenPassThrough(passThroughOptions)
     // this rule makes any other request fail
     server.anyRequest().thenReply(403)
   }
