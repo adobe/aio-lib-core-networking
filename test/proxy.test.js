@@ -29,250 +29,270 @@ test('proxy init error', () => {
   expect(() => new ProxyFetch()).toThrow(err)
 })
 
-describe('proxy (no auth)', () => {
-  let httpsProxyServer, httpProxyServer
-  let httpApiServer, httpsApiServer
+describe('http proxy', () => {
+  const protocol = 'http'
+  let proxyServer, apiServer
   const portNotInUse = 3009
 
-  beforeAll(async () => {
-    httpsProxyServer = await createHttpsProxy()
-    httpProxyServer = await createHttpProxy()
+  describe('no auth', () => {
+    beforeAll(async () => {
+      proxyServer = await createHttpProxy({ useBasicAuth: false })
+      apiServer = await createApiServer({ port: 3000, useSsl: false })
+    })
 
-    httpsApiServer = await createApiServer({ port: 3001, useSsl: true })
-    httpApiServer = await createApiServer({ port: 3000, useSsl: false })
+    afterAll(async () => {
+      await proxyServer.stop()
+      await apiServer.close()
+    })
+
+    test('success', async () => {
+      const apiServerAddress = apiServer.address()
+      const queryObject = { foo: 'bar' }
+
+      const testUrl = `${protocol}://localhost:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
+
+      const proxyUrl = proxyServer.url
+      const proxyFetch = new ProxyFetch({ proxyUrl, rejectUnauthorized: false })
+      const response = await proxyFetch.fetch(testUrl)
+
+      const json = await response.json()
+      expect(json).toStrictEqual(queryObject)
+    })
+
+    test('failure', async () => {
+      // connect to non-existent server port
+      const testUrl = `${protocol}://localhost:${portNotInUse}/mirror/?foo=bar`
+
+      const proxyUrl = proxyServer.url
+      const proxyFetch = new ProxyFetch({ proxyUrl, rejectUnauthorized: false })
+
+      const response = await proxyFetch.fetch(testUrl)
+      expect(response.ok).toEqual(false)
+      expect(response.status).toEqual(502)
+    })
   })
 
-  afterAll(async () => {
-    await httpsProxyServer.stop()
-    await httpProxyServer.stop()
+  describe('basic auth', () => {
+    beforeAll(async () => {
+      proxyServer = await createHttpProxy({ useBasicAuth: true })
+      apiServer = await createApiServer({ port: 3000, useSsl: false })
+    })
 
-    await httpsApiServer.close()
-    await httpApiServer.close()
+    afterAll(async () => {
+      await proxyServer.stop()
+      await apiServer.close()
+    })
+
+    test('success', async () => {
+      const queryObject = { foo: 'bar' }
+      const apiServerPort = apiServer.address().port
+
+      const username = 'admin'
+      const password = 'secret'
+      const headers = {
+        'Proxy-Authorization': 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
+      }
+      const proxyUrl = proxyServer.url
+      const proxyFetch = new ProxyFetch({ proxyUrl, username, password, rejectUnauthorized: false })
+
+      const testUrl = `${protocol}://localhost:${apiServerPort}/mirror?${queryString.stringify(queryObject)}`
+      const response = await proxyFetch.fetch(testUrl, { headers })
+      expect(response.ok).toEqual(true)
+      const json = await response.json()
+      expect(json).toStrictEqual(queryObject)
+    })
+
+    test('failure', async () => {
+      const queryObject = { bar: 'foo' }
+      const apiServerPort = apiServer.address().port
+
+      const username = 'foo'
+      const password = 'dont-know-the-password'
+      const headers = {
+        'Proxy-Authorization': 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
+      }
+      const proxyUrl = proxyServer.url
+      const proxyFetch = new ProxyFetch({ proxyUrl, username, password, rejectUnauthorized: false })
+
+      const testUrl = `${protocol}://localhost:${apiServerPort}/mirror?${queryString.stringify(queryObject)}`
+      const response = await proxyFetch.fetch(testUrl, { headers })
+      expect(response.ok).toEqual(false)
+      expect(response.status).toEqual(403)
+    })
   })
 
-  test('api server success (https)', async () => {
-    const apiServerAddress = httpsApiServer.address()
-    const queryObject = { foo: 'bar' }
+  describe('HttpExponentialBackoff', () => {
+    beforeAll(async () => {
+      proxyServer = await createHttpProxy()
+      apiServer = await createApiServer({ port: 3002, useSsl: false })
+    })
 
-    const testUrl = `https://localhost:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
+    afterAll(async () => {
+      await proxyServer.stop()
+      await apiServer.close()
+    })
 
-    const proxyUrl = httpsProxyServer.url
-    const proxyFetch = new ProxyFetch({ proxyUrl, rejectUnauthorized: false })
-    const response = await proxyFetch.fetch(testUrl)
+    test('api server success', async () => {
+      const apiServerPort = apiServer.address().port
+      const queryObject = { foo: 'bar' }
 
-    const json = await response.json()
-    expect(json).toStrictEqual(queryObject)
-  })
+      const testUrl = `${protocol}://localhost:${apiServerPort}/mirror?${queryString.stringify(queryObject)}`
+      const proxyUrl = proxyServer.url
 
-  test('api server failure (https)', async () => {
-    // connect to non-existent server port
-    const testUrl = `https://localhost:${portNotInUse}/mirror/?foo=bar`
+      const fetchRetry = new HttpExponentialBackoff()
+      const response = await fetchRetry.exponentialBackoff(testUrl, { method: 'GET' }, {
+        proxy: { proxyUrl }
+      })
+      const json = await response.json()
+      expect(json).toStrictEqual(queryObject)
+    })
 
-    const proxyUrl = httpsProxyServer.url
-    const proxyFetch = new ProxyFetch({ proxyUrl, rejectUnauthorized: false })
+    test('api server failure', async () => {
+      // connect to non-existent server port
+      const testUrl = `${protocol}://localhost:3009/mirror/?foo=bar`
+      const proxyUrl = proxyServer.url
 
-    const response = await proxyFetch.fetch(testUrl)
-    expect(response.ok).toEqual(false)
-    expect(response.status).toEqual(502)
-  })
-
-  test('api server success (http)', async () => {
-    const apiServerAddress = httpApiServer.address()
-    const queryObject = { foo: 'bar' }
-
-    const testUrl = `http://localhost:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
-
-    const proxyUrl = httpProxyServer.url
-    const proxyFetch = new ProxyFetch({ proxyUrl, rejectUnauthorized: false })
-    const response = await proxyFetch.fetch(testUrl)
-
-    const json = await response.json()
-    expect(json).toStrictEqual(queryObject)
-  })
-
-  test('api server failure (http)', async () => {
-    // connect to non-existent server port
-    const testUrl = `http://localhost:${portNotInUse}/mirror/?foo=bar`
-
-    const proxyUrl = httpProxyServer.url
-    const proxyFetch = new ProxyFetch({ proxyUrl, rejectUnauthorized: false })
-
-    const response = await proxyFetch.fetch(testUrl)
-    expect(response.ok).toEqual(false)
-    expect(response.status).toEqual(502)
+      const fetchRetry = new HttpExponentialBackoff()
+      const response = await fetchRetry.exponentialBackoff(testUrl, { method: 'GET' }, {
+        proxy: { proxyUrl },
+        maxRetries: 2
+      }, [], 0) // retryDelay must be zero for test timings
+      expect(response.ok).toEqual(false)
+      expect(response.status).toEqual(502)
+    })
   })
 })
 
-describe('proxy (basic auth)', () => {
-  let httpsProxyServer, httpProxyServer
-  let httpsApiServer, httpApiServer
+describe('https proxy', () => {
+  const protocol = 'https'
+  let proxyServer, apiServer
+  const portNotInUse = 3009
 
-  beforeAll(async () => {
-    httpsProxyServer = await createHttpsProxy({ useBasicAuth: true })
-    httpProxyServer = await createHttpProxy({ useBasicAuth: true })
-
-    httpsApiServer = await createApiServer({ port: 3001, useSsl: true })
-    httpApiServer = await createApiServer({ port: 3002, useSsl: false })
-  })
-
-  afterAll(async () => {
-    await httpsProxyServer.stop()
-    await httpProxyServer.stop()
-
-    await httpsApiServer.close()
-    await httpApiServer.close()
-  })
-
-  test('api server success (https)', async () => {
-    const queryObject = { foo: 'bar' }
-    const httpsApiServerPort = httpsApiServer.address().port
-
-    const username = 'admin'
-    const password = 'secret'
-    const headers = {
-      'Proxy-Authorization': 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
-    }
-    const proxyUrl = httpsProxyServer.url
-    const proxyFetch = new ProxyFetch({ proxyUrl, username, password, rejectUnauthorized: false })
-
-    const testUrl = `https://localhost:${httpsApiServerPort}/mirror?${queryString.stringify(queryObject)}`
-    const response = await proxyFetch.fetch(testUrl, { headers })
-    expect(response.ok).toEqual(true)
-    const json = await response.json()
-    expect(json).toStrictEqual(queryObject)
-  })
-
-  test('api server failure (https)', async () => {
-    const queryObject = { bar: 'foo' }
-    const httpsApiServerPort = httpsApiServer.address().port
-
-    const username = 'foo'
-    const password = 'dont-know-the-password'
-    const headers = {
-      'Proxy-Authorization': 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
-    }
-    const proxyUrl = httpsProxyServer.url
-    const proxyFetch = new ProxyFetch({ proxyUrl, username, password, rejectUnauthorized: false })
-
-    const testUrl = `https://localhost:${httpsApiServerPort}/mirror?${queryString.stringify(queryObject)}`
-    const response = await proxyFetch.fetch(testUrl, { headers })
-    expect(response.ok).toEqual(false)
-    expect(response.status).toEqual(403)
-  })
-
-  test('api server success (http)', async () => {
-    const queryObject = { foo: 'bar' }
-    const httpApiServerPort = httpApiServer.address().port
-
-    const username = 'admin'
-    const password = 'secret'
-    const headers = {
-      'Proxy-Authorization': 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
-    }
-    const proxyUrl = httpProxyServer.url
-    const proxyFetch = new ProxyFetch({ proxyUrl, username, password, rejectUnauthorized: false })
-
-    const testUrl = `http://localhost:${httpApiServerPort}/mirror?${queryString.stringify(queryObject)}`
-    const response = await proxyFetch.fetch(testUrl, { headers })
-    expect(response.ok).toEqual(true)
-    const json = await response.json()
-    expect(json).toStrictEqual(queryObject)
-  })
-
-  test('api server failure (http)', async () => {
-    const queryObject = { bar: 'foo' }
-    const httpApiServerPort = httpApiServer.address().port
-
-    const username = 'foo'
-    const password = 'dont-know-the-password'
-    const headers = {
-      'Proxy-Authorization': 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
-    }
-    const proxyUrl = httpProxyServer.url
-    const proxyFetch = new ProxyFetch({ proxyUrl, username, password, rejectUnauthorized: false })
-
-    const testUrl = `http://localhost:${httpApiServerPort}/mirror?${queryString.stringify(queryObject)}`
-    const response = await proxyFetch.fetch(testUrl, { headers })
-    expect(response.ok).toEqual(false)
-    expect(response.status).toEqual(403)
-  })
-})
-
-describe('HttpExponentialBackoff with proxy', () => {
-  let httpsProxyServer, httpProxyServer
-  let httpsApiServer, httpApiServer
-
-  beforeAll(async () => {
-    httpsProxyServer = await createHttpsProxy()
-    httpProxyServer = await createHttpProxy()
-
-    httpsApiServer = await createApiServer({ port: 3001, useSsl: true })
-    httpApiServer = await createApiServer({ port: 3002, useSsl: false })
-  })
-
-  afterAll(async () => {
-    await httpsProxyServer.stop()
-    await httpProxyServer.stop()
-
-    await httpsApiServer.close()
-    await httpApiServer.close()
-  })
-
-  test('api server success (https)', async () => {
-    const apiServerPort = httpsApiServer.address().port
-    const queryObject = { foo: 'bar' }
-
-    const testUrl = `https://localhost:${apiServerPort}/mirror?${queryString.stringify(queryObject)}`
-    const proxyUrl = httpsProxyServer.url
-
-    const fetchRetry = new HttpExponentialBackoff()
-    const response = await fetchRetry.exponentialBackoff(testUrl, { method: 'GET' }, {
-      proxy: { proxyUrl }
+  describe('no auth', () => {
+    beforeAll(async () => {
+      proxyServer = await createHttpsProxy()
+      apiServer = await createApiServer({ port: 3001, useSsl: true })
     })
-    const json = await response.json()
-    expect(json).toStrictEqual(queryObject)
-  })
 
-  test('api server failure (https)', async () => {
-    // connect to non-existent server port
-    const testUrl = 'https://localhost:3009/mirror/?foo=bar'
-    const proxyUrl = httpsProxyServer.url
-
-    const fetchRetry = new HttpExponentialBackoff()
-    const response = await fetchRetry.exponentialBackoff(testUrl, { method: 'GET' }, {
-      proxy: { proxyUrl },
-      maxRetries: 2
-    }, [], 0) // retryDelay must be zero for test timings
-    expect(response.ok).toEqual(false)
-    expect(response.status).toEqual(502)
-  })
-
-  test('api server success (http)', async () => {
-    const apiServerPort = httpApiServer.address().port
-    const queryObject = { foo: 'bar' }
-
-    const testUrl = `http://localhost:${apiServerPort}/mirror?${queryString.stringify(queryObject)}`
-    const proxyUrl = httpProxyServer.url
-
-    const fetchRetry = new HttpExponentialBackoff()
-    const response = await fetchRetry.exponentialBackoff(testUrl, { method: 'GET' }, {
-      proxy: { proxyUrl }
+    afterAll(async () => {
+      await proxyServer.stop()
+      await apiServer.close()
     })
-    const json = await response.json()
-    expect(json).toStrictEqual(queryObject)
+
+    test('success', async () => {
+      const apiServerAddress = apiServer.address()
+      const queryObject = { foo: 'bar' }
+
+      const testUrl = `${protocol}://localhost:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
+
+      const proxyUrl = proxyServer.url
+      const proxyFetch = new ProxyFetch({ proxyUrl, rejectUnauthorized: false })
+      const response = await proxyFetch.fetch(testUrl)
+
+      const json = await response.json()
+      expect(json).toStrictEqual(queryObject)
+    })
+
+    test('failure', async () => {
+      // connect to non-existent server port
+      const testUrl = `${protocol}://localhost:${portNotInUse}/mirror/?foo=bar`
+
+      const proxyUrl = proxyServer.url
+      const proxyFetch = new ProxyFetch({ proxyUrl, rejectUnauthorized: false })
+
+      const response = await proxyFetch.fetch(testUrl)
+      expect(response.ok).toEqual(false)
+      expect(response.status).toEqual(502)
+    })
   })
 
-  test('api server failure (http)', async () => {
-    // connect to non-existent server port
-    const testUrl = 'http://localhost:3009/mirror/?foo=bar'
-    const proxyUrl = httpProxyServer.url
+  describe('basic auth', () => {
+    beforeAll(async () => {
+      proxyServer = await createHttpsProxy({ useBasicAuth: true })
+      apiServer = await createApiServer({ port: 3001, useSsl: true })
+    })
 
-    const fetchRetry = new HttpExponentialBackoff()
-    const response = await fetchRetry.exponentialBackoff(testUrl, { method: 'GET' }, {
-      proxy: { proxyUrl },
-      maxRetries: 2
-    }, [], 0) // retryDelay must be zero for test timings
-    expect(response.ok).toEqual(false)
-    expect(response.status).toEqual(502)
+    afterAll(async () => {
+      await proxyServer.stop()
+      await apiServer.close()
+    })
+
+    test('success', async () => {
+      const queryObject = { foo: 'bar' }
+      const apiServerPort = apiServer.address().port
+
+      const username = 'admin'
+      const password = 'secret'
+      const headers = {
+        'Proxy-Authorization': 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
+      }
+      const proxyUrl = proxyServer.url
+      const proxyFetch = new ProxyFetch({ proxyUrl, username, password, rejectUnauthorized: false })
+
+      const testUrl = `${protocol}://localhost:${apiServerPort}/mirror?${queryString.stringify(queryObject)}`
+      const response = await proxyFetch.fetch(testUrl, { headers })
+      expect(response.ok).toEqual(true)
+      const json = await response.json()
+      expect(json).toStrictEqual(queryObject)
+    })
+
+    test('failure', async () => {
+      const queryObject = { bar: 'foo' }
+      const apiServerPort = apiServer.address().port
+
+      const username = 'foo'
+      const password = 'dont-know-the-password'
+      const headers = {
+        'Proxy-Authorization': 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
+      }
+      const proxyUrl = proxyServer.url
+      const proxyFetch = new ProxyFetch({ proxyUrl, username, password, rejectUnauthorized: false })
+
+      const testUrl = `${protocol}://localhost:${apiServerPort}/mirror?${queryString.stringify(queryObject)}`
+      const response = await proxyFetch.fetch(testUrl, { headers })
+      expect(response.ok).toEqual(false)
+      expect(response.status).toEqual(403)
+    })
+  })
+
+  describe('HttpExponentialBackoff', () => {
+    beforeAll(async () => {
+      proxyServer = await createHttpsProxy()
+      apiServer = await createApiServer({ port: 3001, useSsl: true })
+    })
+
+    afterAll(async () => {
+      await proxyServer.stop()
+      await apiServer.close()
+    })
+
+    test('success', async () => {
+      const apiServerPort = apiServer.address().port
+      const queryObject = { foo: 'bar' }
+
+      const testUrl = `${protocol}://localhost:${apiServerPort}/mirror?${queryString.stringify(queryObject)}`
+      const proxyUrl = proxyServer.url
+
+      const fetchRetry = new HttpExponentialBackoff()
+      const response = await fetchRetry.exponentialBackoff(testUrl, { method: 'GET' }, {
+        proxy: { proxyUrl }
+      })
+      const json = await response.json()
+      expect(json).toStrictEqual(queryObject)
+    })
+
+    test('failure', async () => {
+      // connect to non-existent server port
+      const testUrl = `${protocol}://localhost:3009/mirror/?foo=bar`
+      const proxyUrl = proxyServer.url
+
+      const fetchRetry = new HttpExponentialBackoff()
+      const response = await fetchRetry.exponentialBackoff(testUrl, { method: 'GET' }, {
+        proxy: { proxyUrl },
+        maxRetries: 2
+      }, [], 0) // retryDelay must be zero for test timings
+      expect(response.ok).toEqual(false)
+      expect(response.status).toEqual(502)
+    })
   })
 })
