@@ -13,7 +13,7 @@ const loggerNamespace = '@adobe/aio-lib-core-networking:test/proxy'
 const logger = require('@adobe/aio-lib-core-logging')(loggerNamespace, { level: process.env.LOG_LEVEL })
 const mockttp = require('mockttp')
 const syswidecas = require('syswide-cas')
-const { mkdtemp, writeFile } = require('fs/promises')
+const { mkdtemp, writeFile } = require('fs').promises
 const path = require('path')
 const os = require('os')
 
