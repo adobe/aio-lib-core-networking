@@ -19,38 +19,66 @@ jest.mock('node-fetch', () =>
   jest.requireActual('node-fetch')
 )
 
-test('api server test (http)', async () => {
-  const apiServer = await createApiServer()
-  const apiServerAddress = apiServer.address()
+describe('http', () => {
+  const protocol = 'http'
+  let apiServer, apiServerAddress
 
-  // query strings values are always strings (when parsed, and in this case mirrored)
-  const queryObject = {
-    foo: 'bar',
-    abc: '123'
-  }
+  beforeAll(async () => {
+    apiServer = await createApiServer()
+    apiServerAddress = apiServer.address()
+  })
 
-  try {
-    const testUrl = `http://${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
+  afterAll(() => {
+    apiServer.close()
+  })
+
+  test('mirror success', async () => {
+    // query strings values are always strings (when parsed, and in this case mirrored)
+    const queryObject = {
+      foo: 'bar',
+      abc: '123'
+    }
+
+    const testUrl = `${protocol}://${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
     const response = await fetch(testUrl)
     const json = await response.json()
     expect(json).toStrictEqual(queryObject)
-  } finally {
-    apiServer.close()
-  }
+  })
+
+  test('post success', async () => {
+    const body = { some: 'data' }
+    const testUrl = `${protocol}://${apiServerAddress.address}:${apiServerAddress.port}/post`
+    const response = await fetch(testUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+    const json = await response.json()
+    expect(json).toStrictEqual(body)
+  })
 })
 
-test('api server test (https)', async () => {
-  const apiServer = await createApiServer({ useSsl: true })
-  const apiServerAddress = apiServer.address()
+describe('https', () => {
+  const protocol = 'https'
+  let apiServer, apiServerAddress
 
-  // query strings values are always strings (when parsed, and in this case mirrored)
-  const queryObject = {
-    foo: 'bar',
-    abc: '123'
-  }
+  beforeAll(async () => {
+    apiServer = await createApiServer({ useSsl: true })
+    apiServerAddress = apiServer.address()
+  })
 
-  try {
-    const testUrl = `https://${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
+  afterAll(() => {
+    apiServer.close()
+  })
+
+  test('mirror success', async () => {
+    // query strings values are always strings (when parsed, and in this case mirrored)
+    const queryObject = {
+      foo: 'bar',
+      abc: '123'
+    }
+
+    const testUrl = `${protocol}://${apiServerAddress.address}:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
     const response = await fetch(testUrl, {
       agent: new https.Agent({
         rejectUnauthorized: false
@@ -58,7 +86,20 @@ test('api server test (https)', async () => {
     })
     const json = await response.json()
     expect(json).toStrictEqual(queryObject)
-  } finally {
-    apiServer.close()
-  }
+  })
+
+  test('post success', async () => {
+    const body = { some: 'data' }
+    const testUrl = `${protocol}://${apiServerAddress.address}:${apiServerAddress.port}/post`
+    const response = await fetch(testUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      agent: new https.Agent({
+        rejectUnauthorized: false
+      })
+    })
+    const json = await response.json()
+    expect(json).toStrictEqual(body)
+  })
 })

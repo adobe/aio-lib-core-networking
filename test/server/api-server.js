@@ -27,12 +27,18 @@ async function createApiServer (options = {}) {
   const { port = 3000, useSsl = false } = options
 
   const app = express()
+  app.use(express.json())
+
   let server
 
   app.get('/mirror', function (req, res) {
     return res.status(200).json({
       ...req.query
     })
+  })
+
+  app.post('/post', function (req, res) {
+    return res.status(200).send(req.body)
   })
 
   if (useSsl) {
