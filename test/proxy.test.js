@@ -13,8 +13,7 @@ const ProxyFetch = require('../src/ProxyFetch')
 const HttpExponentialBackoff = require('../src/HttpExponentialBackoff')
 const { codes } = require('../src/SDKErrors')
 const queryString = require('query-string')
-const { createHttpsProxy, createHttpProxy } = require('./server/proxy')
-const { createApiServer } = require('./server/api-server')
+const { createApiServer, createHttpsProxy, createHttpProxy } = require('@adobe/aio-lib-test-proxy')
 
 // unmock node-fetch
 jest.mock('node-fetch', () =>
