@@ -20,6 +20,10 @@ jest.mock('node-fetch', () =>
   jest.requireActual('node-fetch')
 )
 
+beforeEach(() => {
+  jest.useRealTimers()
+})
+
 test('proxy init error', () => {
   const err = new codes.ERROR_PROXY_FETCH_INITIALIZATION({
     sdkDetails: {},
