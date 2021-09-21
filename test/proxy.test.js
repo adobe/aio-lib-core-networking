@@ -255,6 +255,8 @@ describe('https proxy', () => {
   })
 
   describe('HttpExponentialBackoff', () => {
+    jest.setTimeout(60000)
+
     beforeAll(async () => {
       proxyServer = await createHttpsProxy()
       apiServer = await createApiServer({ port: 3001, useSsl: true })
