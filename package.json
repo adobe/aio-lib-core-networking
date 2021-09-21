@@ -8,7 +8,7 @@
     "@adobe/aio-lib-core-errors": "^3.0.0",
     "@adobe/aio-lib-core-logging": "1.1.0",
     "fetch-retry": "^3.0.1",
-    "node-fetch": "^2.6.0",
+    "node-fetch": "2.6.2",
     "http-proxy-agent": "^4.0.1",
     "https-proxy-agent": "2.2.4"
   },
