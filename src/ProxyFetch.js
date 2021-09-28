@@ -25,8 +25,7 @@ const http = require('http')
  *
  * @typedef {object} ProxyAuthOptions
  * @property {string} proxyUrl - the proxy's url
- * @property {string} username - the username
- * @property {string} password - the password
+ * @property {boolean} rejectUnauthorized - set to false to not reject unauthorized server certs
  */
 
 /**
@@ -40,15 +39,16 @@ class ProxyFetch {
    */
   constructor (authOptions = {}) {
     logger.debug(`constructor - authOptions: ${JSON.stringify(authOptions)}`)
-    const { proxyUrl, username, password } = authOptions
+    const { proxyUrl } = authOptions
+    const { auth } = urlToHttpOptions(proxyUrl)
 
     if (!proxyUrl) {
-      const sdkDetails = { proxyUrl, username, password }
+      const sdkDetails = { proxyUrl, auth }
       throw new codes.ERROR_PROXY_FETCH_INITIALIZATION({ sdkDetails, messageValues: 'proxyUrl' })
     }
 
-    if (!username || !password) {
-      logger.debug('username or password not set, proxy is anonymous.')
+    if (!auth) {
+      logger.debug('constructor: username or password not set, proxy is anonymous.')
     }
 
     this.authOptions = authOptions

@@ -65,13 +65,13 @@ async function sdkTest() {
 }
 
 let proxyFetch 
-// this will get the proxy settings from the config, if available (proxy.url, proxy.username, proxy.password)
+// this will get the proxy settings from the the HTTP_PROXY or HTTPS_PROXY environment variables, if set
 proxyFetch = createFetch()
 
-// this will use the passed in proxy settings. only proxyUrl is required
-proxyFetch = createFetch({ proxyUrl: 'http://my.proxy:8080', username: 'admin', password: 'secret' })
+// this will use the passed in proxy settings. Embed basic auth in the url, if required
+proxyFetch = createFetch({ proxyUrl: 'http://my.proxy:8080' })
 
-// if the proxy settings are not passed in, and not available in the config, it falls back to a simple fetch
+// if the proxy settings are not passed in, and not available in the HTTP_PROXY or HTTPS_PROXY environment variables, it falls back to a simple fetch
 const simpleFetch = createFetch()
 ```
 

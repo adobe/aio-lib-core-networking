@@ -65,13 +65,13 @@ async function sdkTest() {
 }
 
 let proxyFetch 
-// this will get the proxy settings from the config, if available (proxy.url, proxy.username, proxy.password)
+// this will get the proxy settings from the the HTTP_PROXY or HTTPS_PROXY environment variables, if set
 proxyFetch = createFetch()
 
-// this will use the passed in proxy settings. only proxyUrl is required
-proxyFetch = createFetch({ proxyUrl: 'http://my.proxy:8080', username: 'admin', password: 'secret' })
+// this will use the passed in proxy settings. Embed basic auth in the url, if required
+proxyFetch = createFetch({ proxyUrl: 'http://my.proxy:8080' })
 
-// if the proxy settings are not passed in, and not available in the config, it falls back to a simple fetch
+// if the proxy settings are not passed in, and not available in the HTTP_PROXY or HTTPS_PROXY environment variables, it falls back to a simple fetch
 const simpleFetch = createFetch()
 ```
 
@@ -91,10 +91,7 @@ with defaults set to max of 3 retries and initial Delay as 100ms</p>
 ## Functions
 
 <dl>
-<dt><a href="#getProxyOptionsFromConfig">getProxyOptionsFromConfig()</a> ⇒ <code><a href="#ProxyAuthOptions">ProxyAuthOptions</a></code></dt>
-<dd><p>Gets the proxy options from the config.</p>
-</dd>
-<dt><a href="#createFetch">createFetch([proxyOptions])</a> ⇒ <code>function</code></dt>
+<dt><a href="#createFetch">createFetch([proxyAuthOptions])</a> ⇒ <code>function</code></dt>
 <dd><p>Return the appropriate Fetch function depending on proxy settings.</p>
 </dd>
 </dl>
@@ -177,16 +174,9 @@ Fetch function, using the configured NTLM Auth options.
 | resource | <code>string</code> \| <code>Request</code> | the url or Request object to fetch from |
 | options | <code>object</code> | the fetch options |
 
-<a name="getProxyOptionsFromConfig"></a>
-
-## getProxyOptionsFromConfig() ⇒ [<code>ProxyAuthOptions</code>](#ProxyAuthOptions)
-Gets the proxy options from the config.
-
-**Kind**: global function  
-**Returns**: [<code>ProxyAuthOptions</code>](#ProxyAuthOptions) - the proxy options  
 <a name="createFetch"></a>
 
-## createFetch([proxyOptions]) ⇒ <code>function</code>
+## createFetch([proxyAuthOptions]) ⇒ <code>function</code>
 Return the appropriate Fetch function depending on proxy settings.
 
 **Kind**: global function  
@@ -194,10 +184,7 @@ Return the appropriate Fetch function depending on proxy settings.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| [proxyOptions] | [<code>ProxyAuthOptions</code>](#ProxyAuthOptions) | the options for the proxy |
-| proxyOptions.proxyUrl | <code>string</code> | the url for the proxy |
-| proxyOptions.username | <code>string</code> | the username for the proxy |
-| proxyOptions.password | <code>string</code> | the password for the proxy |
+| [proxyAuthOptions] | [<code>ProxyAuthOptions</code>](#ProxyAuthOptions) | the proxy auth options |
 
 <a name="RetryOptions"></a>
 
@@ -224,8 +211,7 @@ Proxy Auth Options
 | Name | Type | Description |
 | --- | --- | --- |
 | proxyUrl | <code>string</code> | the proxy's url |
-| username | <code>string</code> | the username |
-| password | <code>string</code> | the password |
+| rejectUnauthorized | <code>boolean</code> | set to false to not reject unauthorized server certs |
 
 ### Debug Logs
 

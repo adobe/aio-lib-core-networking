@@ -9,7 +9,7 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-const { HttpExponentialBackoff, ProxyFetch, createFetch, getProxyOptionsFromConfig } = require('../src/index')
+const { HttpExponentialBackoff, ProxyFetch, createFetch } = require('../src/index')
 
 test('exports', () => {
   expect(typeof HttpExponentialBackoff).toEqual('function')
@@ -20,7 +20,4 @@ test('exports', () => {
 
   expect(typeof createFetch).toEqual('function')
   expect(typeof createFetch()).toEqual('function')
-
-  expect(typeof getProxyOptionsFromConfig).toEqual('function')
-  expect(typeof getProxyOptionsFromConfig()).toEqual('object')
 })

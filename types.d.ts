@@ -32,13 +32,11 @@ declare class HttpExponentialBackoff {
 /**
  * Proxy Auth Options
  * @property proxyUrl - the proxy's url
- * @property username - the username
- * @property password - the password
+ * @property rejectUnauthorized - set to false to not reject unauthorized server certs
  */
 declare type ProxyAuthOptions = {
     proxyUrl: string;
-    username: string;
-    password: string;
+    rejectUnauthorized: boolean;
 };
 
 /**
@@ -62,22 +60,9 @@ declare class ProxyFetch {
 }
 
 /**
- * Gets the proxy options from the config.
- * @returns the proxy options
- */
-declare function getProxyOptionsFromConfig(): ProxyAuthOptions;
-
-/**
  * Return the appropriate Fetch function depending on proxy settings.
- * @param [proxyOptions] - the options for the proxy
- * @param proxyOptions.proxyUrl - the url for the proxy
- * @param proxyOptions.username - the username for the proxy
- * @param proxyOptions.password - the password for the proxy
+ * @param [proxyAuthOptions] - the proxy auth options
  * @returns the Fetch API function
  */
-declare function createFetch(proxyOptions?: {
-    proxyUrl: string;
-    username: string;
-    password: string;
-}): (...params: any[]) => any;
+declare function createFetch(proxyAuthOptions?: ProxyAuthOptions): (...params: any[]) => any;
 

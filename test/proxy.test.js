@@ -14,6 +14,10 @@ const HttpExponentialBackoff = require('../src/HttpExponentialBackoff')
 const { codes } = require('../src/SDKErrors')
 const queryString = require('query-string')
 const { createApiServer, createHttpsProxy, createHttpProxy } = require('@adobe/aio-lib-test-proxy')
+const { getProxyForUrl } = require('proxy-from-env')
+const url = require('url')
+
+jest.mock('proxy-from-env')
 
 // unmock node-fetch
 jest.mock('node-fetch', () =>
@@ -22,6 +26,7 @@ jest.mock('node-fetch', () =>
 
 beforeEach(() => {
   jest.useRealTimers()
+  getProxyForUrl.mockReset()
 })
 
 test('proxy init error', () => {
@@ -95,7 +100,12 @@ describe('http proxy', () => {
       const headers = {
         'Proxy-Authorization': 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
       }
-      const proxyUrl = proxyServer.url
+
+      const urlWithAuth = new url.URL(proxyServer.url)
+      urlWithAuth.username = username
+      urlWithAuth.password = password
+      const proxyUrl = urlWithAuth.toString()
+
       const proxyFetch = new ProxyFetch({ proxyUrl, username, password, rejectUnauthorized: false })
 
       const testUrl = `${protocol}://localhost:${apiServerPort}/mirror?${queryString.stringify(queryObject)}`
@@ -114,7 +124,12 @@ describe('http proxy', () => {
       const headers = {
         'Proxy-Authorization': 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
       }
-      const proxyUrl = proxyServer.url
+
+      const urlWithAuth = new url.URL(proxyServer.url)
+      urlWithAuth.username = username
+      urlWithAuth.password = password
+      const proxyUrl = urlWithAuth.toString()
+
       const proxyFetch = new ProxyFetch({ proxyUrl, username, password, rejectUnauthorized: false })
 
       const testUrl = `${protocol}://localhost:${apiServerPort}/mirror?${queryString.stringify(queryObject)}`
@@ -135,7 +150,7 @@ describe('http proxy', () => {
       await apiServer.close()
     })
 
-    test('api server success', async () => {
+    test('success', async () => {
       const apiServerPort = apiServer.address().port
       const queryObject = { foo: 'bar' }
 
@@ -150,7 +165,7 @@ describe('http proxy', () => {
       expect(json).toStrictEqual(queryObject)
     })
 
-    test('api server failure', async () => {
+    test('failure', async () => {
       // connect to non-existent server port
       const testUrl = `${protocol}://localhost:3009/mirror/?foo=bar`
       const proxyUrl = proxyServer.url

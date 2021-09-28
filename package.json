@@ -8,9 +8,10 @@
     "@adobe/aio-lib-core-errors": "^3.0.0",
     "@adobe/aio-lib-core-logging": "1.1.0",
     "fetch-retry": "^3.0.1",
-    "node-fetch": "^2.6.4",
     "http-proxy-agent": "^4.0.1",
-    "https-proxy-agent": "2.2.4"
+    "https-proxy-agent": "2.2.4",
+    "node-fetch": "^2.6.4",
+    "proxy-from-env": "^1.1.0"
   },
   "deprecated": false,
   "description": "Adobe I/O Lib Core Networking",
