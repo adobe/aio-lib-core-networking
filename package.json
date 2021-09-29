@@ -4,14 +4,19 @@
   },
   "bundleDependencies": false,
   "dependencies": {
-    "node-fetch": "^2.6.0",
+    "@adobe/aio-lib-core-config": "^2.0.1",
     "@adobe/aio-lib-core-errors": "^3.0.0",
     "@adobe/aio-lib-core-logging": "1.1.0",
-    "fetch-retry": "^3.0.1"
+    "fetch-retry": "^3.0.1",
+    "http-proxy-agent": "^4.0.1",
+    "https-proxy-agent": "2.2.4",
+    "node-fetch": "^2.6.4",
+    "proxy-from-env": "^1.1.0"
   },
   "deprecated": false,
   "description": "Adobe I/O Lib Core Networking",
   "devDependencies": {
+    "@adobe/aio-lib-test-proxy": "^1.0.0",
     "@adobe/eslint-config-aio-lib-config": "^1.2.0",
     "babel-runtime": "^6.26.0",
     "dotenv": "^8.1.0",
@@ -24,16 +29,18 @@
     "eslint-plugin-node": "^11.0.0",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.0",
+    "fetch-mock": "^9.0.0",
     "jest": "^25.1.0",
     "jest-fetch-mock": "^3.0.1",
+    "jest-html-reporter": "^3.4.1",
     "jest-junit": "^10.0.0",
     "jest-plugin-fs": "^2.9.0",
     "jsdoc": "^3.6.3",
     "jsdoc-to-markdown": "^5.0.0",
     "openapi-schema-validator": "^3.0.3",
+    "query-string": "^7.0.1",
     "stdout-stderr": "^0.1.9",
-    "tsd-jsdoc": "^2.4.0",
-    "fetch-mock": "^9.0.0"
+    "tsd-jsdoc": "^2.4.0"
   },
   "homepage": "https://github.com/adobe/aio-lib-core-networking",
   "license": "Apache-2.0",
@@ -47,7 +54,11 @@
     "lint": "eslint src test",
     "test": "npm run lint && npm run unit-tests",
     "typings": "jsdoc -t node_modules/tsd-jsdoc/dist -r src/*.js -d .",
-    "unit-tests": "jest --config test/jest.config.js --maxWorkers=2"
+    "unit-tests": "jest --config test/jest.config.js --runInBand"
   },
-  "version": "1.0.1"
+  "version": "1.0.1",
+  "engineStrict": true,
+  "engines": {
+    "node": ">=12.0.0"
+  }
 }
