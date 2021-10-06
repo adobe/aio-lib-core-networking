@@ -56,7 +56,7 @@
     "typings": "jsdoc -t node_modules/tsd-jsdoc/dist -r src/*.js -d .",
     "unit-tests": "jest --config test/jest.config.js --runInBand"
   },
-  "version": "1.0.1",
+  "version": "2.0.0",
   "engineStrict": true,
   "engines": {
     "node": ">=12.0.0"
