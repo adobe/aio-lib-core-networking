@@ -58,9 +58,10 @@ class ProxyFetch {
   /**
    * Returns the http.Agent used for this proxy
    *
+   * @param {string} resourceUrl an endpoint url for proxyAgent selection
    * @returns {http.Agent} a http.Agent for basic auth proxy
    */
-  proxyAgent () {
+  proxyAgent (resourceUrl) {
     const { proxyUrl, username, password, rejectUnauthorized = true } = this.authOptions
     const proxyOpts = urlToHttpOptions(proxyUrl)
 
@@ -76,7 +77,7 @@ class ProxyFetch {
       logger.warn(`proxyAgent - rejectUnauthorized is set to ${rejectUnauthorized}`)
     }
 
-    if (proxyOpts.protocol.startsWith('https')) {
+    if (resourceUrl.startsWith('https')) {
       return new HttpsProxyAgent(proxyOpts)
     } else {
       return new HttpProxyAgent(proxyOpts)
@@ -93,7 +94,7 @@ class ProxyFetch {
   async fetch (resource, options = {}) {
     return originalFetch(resource, {
       ...options,
-      agent: this.proxyAgent()
+      agent: this.proxyAgent(resource)
     })
   }
 }
