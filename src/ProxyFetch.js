@@ -16,9 +16,38 @@ const { codes } = require('./SDKErrors')
 const HttpProxyAgent = require('http-proxy-agent')
 const HttpsProxyAgent = require('https-proxy-agent')
 const { urlToHttpOptions } = require('./utils')
-const http = require('http')
 
 /* global Response, Request */
+
+/**
+ * @private
+ *
+ * @param {string} resourceUrl an endpoint url for proxyAgent selection
+ * @param {object} authOptions an object which contains auth information
+ * @returns {http.Agent} a http.Agent for basic auth proxy
+ */
+function proxyAgent (resourceUrl, authOptions) {
+  const { proxyUrl, username, password, rejectUnauthorized = true } = authOptions
+  const proxyOpts = urlToHttpOptions(proxyUrl)
+
+  if (!proxyOpts.auth && username && password) {
+    logger.debug('username and password not set in proxy url, using credentials passed in the constructor.')
+    proxyOpts.auth = `${username}:${password}`
+  }
+
+  // the passing on of this property to the underlying implementation only works on https-proxy-agent@2.2.4
+  // this is only used for unit-tests and passed in the constructor
+  proxyOpts.rejectUnauthorized = rejectUnauthorized
+  if (rejectUnauthorized === false) {
+    logger.warn(`proxyAgent - rejectUnauthorized is set to ${rejectUnauthorized}`)
+  }
+
+  if (resourceUrl.startsWith('https')) {
+    return new HttpsProxyAgent(proxyOpts)
+  } else {
+    return new HttpProxyAgent(proxyOpts)
+  }
+}
 
 /**
  * Proxy Auth Options
@@ -56,34 +85,6 @@ class ProxyFetch {
   }
 
   /**
-   * Returns the http.Agent used for this proxy
-   *
-   * @returns {http.Agent} a http.Agent for basic auth proxy
-   */
-  proxyAgent () {
-    const { proxyUrl, username, password, rejectUnauthorized = true } = this.authOptions
-    const proxyOpts = urlToHttpOptions(proxyUrl)
-
-    if (!proxyOpts.auth && username && password) {
-      logger.debug('username and password not set in proxy url, using credentials passed in the constructor.')
-      proxyOpts.auth = `${username}:${password}`
-    }
-
-    // the passing on of this property to the underlying implementation only works on https-proxy-agent@2.2.4
-    // this is only used for unit-tests and passed in the constructor
-    proxyOpts.rejectUnauthorized = rejectUnauthorized
-    if (rejectUnauthorized === false) {
-      logger.warn(`proxyAgent - rejectUnauthorized is set to ${rejectUnauthorized}`)
-    }
-
-    if (proxyOpts.protocol.startsWith('https')) {
-      return new HttpsProxyAgent(proxyOpts)
-    } else {
-      return new HttpProxyAgent(proxyOpts)
-    }
-  }
-
-  /**
    * Fetch function, using the configured NTLM Auth options.
    *
    * @param {string | Request} resource - the url or Request object to fetch from
@@ -93,7 +94,7 @@ class ProxyFetch {
   async fetch (resource, options = {}) {
     return originalFetch(resource, {
       ...options,
-      agent: this.proxyAgent()
+      agent: proxyAgent(resource, this.authOptions)
     })
   }
 }

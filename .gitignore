@@ -3,6 +3,7 @@
 coverage
 launch.json
 package-lock.json
+yarn.lock
 /node_modules/
 junit.xml
 test-report.html

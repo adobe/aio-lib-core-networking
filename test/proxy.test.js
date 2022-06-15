@@ -110,6 +110,10 @@ describe('http proxy', () => {
 
       const testUrl = `${protocol}://localhost:${apiServerPort}/mirror?${queryString.stringify(queryObject)}`
       const response = await proxyFetch.fetch(testUrl, { headers })
+      const spy = jest.spyOn(proxyFetch, 'fetch').mockImplementation(() => testUrl)
+      const pattern = /\b^http\b/
+      expect(proxyFetch.fetch()).toMatch(new RegExp(pattern))
+      spy.mockRestore()
       expect(response.ok).toEqual(true)
       const json = await response.json()
       expect(json).toStrictEqual(queryObject)
@@ -134,6 +138,10 @@ describe('http proxy', () => {
 
       const testUrl = `${protocol}://localhost:${apiServerPort}/mirror?${queryString.stringify(queryObject)}`
       const response = await proxyFetch.fetch(testUrl, { headers })
+      const spy = jest.spyOn(proxyFetch, 'fetch').mockImplementation(() => testUrl)
+      const pattern = /\b^https\b/
+      expect(proxyFetch.fetch()).not.toMatch(new RegExp(pattern))
+      spy.mockRestore()
       expect(response.ok).toEqual(false)
       expect(response.status).toEqual(403)
     })
@@ -249,6 +257,10 @@ describe('https proxy', () => {
 
       const testUrl = `${protocol}://localhost:${apiServerPort}/mirror?${queryString.stringify(queryObject)}`
       const response = await proxyFetch.fetch(testUrl, { headers })
+      const spy = jest.spyOn(proxyFetch, 'fetch').mockImplementation(() => testUrl)
+      const pattern = /\b^https\b/
+      expect(proxyFetch.fetch()).toMatch(new RegExp(pattern))
+      spy.mockRestore()
       expect(response.ok).toEqual(true)
       const json = await response.json()
       expect(json).toStrictEqual(queryObject)
@@ -268,6 +280,10 @@ describe('https proxy', () => {
 
       const testUrl = `${protocol}://localhost:${apiServerPort}/mirror?${queryString.stringify(queryObject)}`
       const response = await proxyFetch.fetch(testUrl, { headers })
+      const spy = jest.spyOn(proxyFetch, 'fetch').mockImplementation(() => testUrl)
+      const pattern = /\b^http\b/
+      expect(proxyFetch.fetch()).not.toMatch(new RegExp(pattern))
+      spy.mockRestore()
       expect(response.ok).toEqual(false)
       expect(response.status).toEqual(403)
     })
