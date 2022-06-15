@@ -179,6 +179,46 @@ describe('http proxy', () => {
       expect(response.status).toEqual(502)
     })
   })
+
+  describe('http proxy agent test case', () => {
+    beforeAll(async () => {
+      proxyServer = await createHttpProxy({ useBasicAuth: false })
+      apiServer = await createApiServer({ port: 3000, useSsl: false })
+    })
+
+    afterAll(async () => {
+      await proxyServer.stop()
+      await apiServer.close()
+    })
+
+    test('success', async () => {
+      const apiServerAddress = apiServer.address()
+      const queryObject = { foo: 'bar' }
+
+      const testUrl = `${protocol}://localhost:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
+
+      const proxyUrl = proxyServer.url
+      const proxyFetch = new ProxyFetch({ proxyUrl, rejectUnauthorized: false })
+      const spy = jest.spyOn(proxyFetch, 'fetch').mockImplementation(() => testUrl)
+      const pattern = /\b^http\b/
+      expect(proxyFetch.fetch()).toMatch(new RegExp(pattern))
+      spy.mockRestore()
+    })
+
+    test('failure', async () => {
+      const apiServerAddress = apiServer.address()
+      const queryObject = { foo: 'bar' }
+
+      const testUrl = `${protocol}://localhost:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
+
+      const proxyUrl = proxyServer.url
+      const proxyFetch = new ProxyFetch({ proxyUrl, rejectUnauthorized: false })
+      const spy = jest.spyOn(proxyFetch, 'fetch').mockImplementation(() => testUrl)
+      const pattern = /\b^https\b/
+      expect(proxyFetch.fetch()).not.toMatch(new RegExp(pattern))
+      spy.mockRestore()
+    })
+  })
 })
 
 describe('https proxy', () => {
@@ -311,6 +351,46 @@ describe('https proxy', () => {
       }, [], 0) // retryDelay must be zero for test timings
       expect(response.ok).toEqual(false)
       expect(response.status).toEqual(502)
+    })
+  })
+
+  describe('https proxy agent test case', () => {
+    beforeAll(async () => {
+      proxyServer = await createHttpProxy({ useBasicAuth: false })
+      apiServer = await createApiServer({ port: 3000, useSsl: false })
+    })
+
+    afterAll(async () => {
+      await proxyServer.stop()
+      await apiServer.close()
+    })
+
+    test('success', async () => {
+      const apiServerAddress = apiServer.address()
+      const queryObject = { foo: 'bar' }
+
+      const testUrl = `${protocol}://localhost:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
+
+      const proxyUrl = proxyServer.url
+      const proxyFetch = new ProxyFetch({ proxyUrl, rejectUnauthorized: false })
+      const spy = jest.spyOn(proxyFetch, 'fetch').mockImplementation(() => testUrl)
+      const pattern = /\b^https\b/
+      expect(proxyFetch.fetch()).toMatch(new RegExp(pattern))
+      spy.mockRestore()
+    })
+
+    test('failure', async () => {
+      const apiServerAddress = apiServer.address()
+      const queryObject = { foo: 'bar' }
+
+      const testUrl = `${protocol}://localhost:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
+
+      const proxyUrl = proxyServer.url
+      const proxyFetch = new ProxyFetch({ proxyUrl, rejectUnauthorized: false })
+      const spy = jest.spyOn(proxyFetch, 'fetch').mockImplementation(() => testUrl)
+      const pattern = /\b^http\b/
+      expect(proxyFetch.fetch()).not.toMatch(new RegExp(pattern))
+      spy.mockRestore()
     })
   })
 })
