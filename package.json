@@ -1,12 +1,18 @@
 {
+  "name": "@adobe/aio-lib-core-networking",
+  "homepage": "https://github.com/adobe/aio-lib-core-networking",
+  "license": "Apache-2.0",
+  "main": "src/index.js",
+  "repository": "https://github.com/adobe/aio-lib-core-networking",
+  "version": "2.0.0",
   "bugs": {
     "url": "https://github.com/adobe/aio-lib-core-networking/issues"
   },
-  "bundleDependencies": false,
+  "bundleDependencies": [],
   "dependencies": {
-    "@adobe/aio-lib-core-config": "^2.0.1",
-    "@adobe/aio-lib-core-errors": "^3.0.0",
-    "@adobe/aio-lib-core-logging": "1.1.0",
+    "@adobe/aio-lib-core-config": "^3.0.0",
+    "@adobe/aio-lib-core-errors": "^3.1.0",
+    "@adobe/aio-lib-core-logging": "^2.0.0",
     "fetch-retry": "^3.0.1",
     "http-proxy-agent": "^4.0.1",
     "https-proxy-agent": "2.2.4",
@@ -31,24 +37,19 @@
     "eslint-plugin-promise": "^6.0.0",
     "eslint-plugin-standard": "^4.0.0",
     "fetch-mock": "^9.0.0",
-    "jest": "^25.1.0",
+    "jest": "^25.5.4",
     "jest-fetch-mock": "^3.0.1",
     "jest-html-reporter": "^3.4.1",
     "jest-junit": "^10.0.0",
     "jest-plugin-fs": "^2.9.0",
     "jsdoc": "^3.6.3",
-    "jsdoc-to-markdown": "^5.0.0",
+    "jsdoc-to-markdown": "^5.0.3",
     "openapi-schema-validator": "^3.0.3",
     "query-string": "^7.0.1",
     "stdout-stderr": "^0.1.9",
     "tsd-jsdoc": "^2.4.0",
     "typescript": "^4.7.3"
   },
-  "homepage": "https://github.com/adobe/aio-lib-core-networking",
-  "license": "Apache-2.0",
-  "main": "src/index.js",
-  "name": "@adobe/aio-lib-core-networking",
-  "repository": "https://github.com/adobe/aio-lib-core-networking",
   "scripts": {
     "e2e": "jest --config e2e/jest.config.js",
     "generate-docs": "npm run typings && npm run jsdoc",
@@ -58,9 +59,7 @@
     "typings": "jsdoc -t node_modules/tsd-jsdoc/dist -r src/*.js -d .",
     "unit-tests": "jest --config test/jest.config.js --runInBand"
   },
-  "version": "2.0.0",
-  "engineStrict": true,
   "engines": {
-    "node": ">=12.0.0"
+    "node": "^14.16 || ^16.13 || >=18"
   }
 }
