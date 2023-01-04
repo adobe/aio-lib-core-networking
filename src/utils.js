@@ -77,7 +77,7 @@ function urlToHttpOptions (aUrl) {
   }
 
   if (username && password) {
-    options.auth = `${username}:${password}`
+    options.auth = `${decodeURI(username)}:${decodeURI(password)}`
   }
   return options
 }
