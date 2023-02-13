@@ -82,7 +82,23 @@ function urlToHttpOptions (aUrl) {
   return options
 }
 
+/**
+ * Parse the Retry-After header
+ * Spec: {@link https://tools.ietf.org/html/rfc7231#section-7.1.3}
+ *
+ * @param {string} header Retry-After header value
+ * @returns {number} Number of milliseconds to sleep until the next call to getEventsFromJournal
+ */
+function parseRetryAfterHeader (header) {
+  if (header.match(/^[0-9]+$/)) {
+    return parseInt(header, 10) * 1000
+  } else {
+    return Math.max(0, Date.parse(header) - Date.now())
+  }
+}
+
 module.exports = {
   urlToHttpOptions,
-  createFetch
+  createFetch,
+  parseRetryAfterHeader
 }

@@ -13,7 +13,7 @@ const DEFAULT_MAX_RETRIES = 3
 const DEFAULY_INITIAL_DELAY_MS = 100
 const loggerNamespace = '@adobe/aio-lib-core-networking:HttpExponentialBackoff'
 const logger = require('@adobe/aio-lib-core-logging')(loggerNamespace, { level: process.env.LOG_LEVEL })
-const { createFetch } = require('./utils')
+const { createFetch, parseRetryAfterHeader } = require('./utils')
 
 /* global Request, Response, ProxyAuthOptions */ // for linter
 
@@ -89,7 +89,7 @@ class HttpExponentialBackoff {
   __getRetryOptions (retries, initialDelayInMillis) {
     return {
       retryOn: this.__getRetryOn(retries),
-      retryDelay: this.__getRetryDelay(initialDelayInMillis)
+      retryDelay: this.__getRetryDelayWithRetryAfterHeader(initialDelayInMillis)
     }
   }
 
@@ -103,7 +103,7 @@ class HttpExponentialBackoff {
     */
   __getRetryOn (retries) {
     return function (attempt, error, response) {
-      if (attempt < retries && (error !== null || (response.status > 499 && response.status < 600))) {
+      if (attempt < retries && (error !== null || (response.status > 499 && response.status < 600) || response.status === 429)) {
         const msg = `Retrying after attempt ${attempt + 1}. failed: ${error || response.statusText}`
         logger.debug(msg)
         return true
@@ -125,6 +125,25 @@ class HttpExponentialBackoff {
       const msg = `Request will be retried after ${timeToWait} ms`
       logger.debug(msg)
       return timeToWait
+    }
+  }
+
+  /**
+   * Retry Delay returns a function that either:
+   *  - return the value of Retry-After header, if present
+   *  - implements exponential backoff otherwise
+   *
+   * @param {number} initialDelayInMillis The multiplying factor and the initial delay. Eg. 100 would mean the retries would be spaced at 100, 200, 400, .. ms
+   * @returns {Function} retryDelayFunction {function(*=, *, *): number}
+   * @private
+   */
+  __getRetryDelayWithRetryAfterHeader (initialDelayInMillis) {
+    return (attempt, error, response) => {
+      const retryAfter = response.headers.get('Retry-After')
+      if (retryAfter != null) {
+        return parseRetryAfterHeader(retryAfter)
+      }
+      return this.__getRetryDelay(initialDelayInMillis)(attempt, error, response)
     }
   }
 }
