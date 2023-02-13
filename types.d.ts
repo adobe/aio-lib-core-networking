@@ -46,11 +46,6 @@ declare type ProxyAuthOptions = {
 declare class ProxyFetch {
     constructor(authOptions: ProxyAuthOptions);
     /**
-     * Returns the http.Agent used for this proxy
-     * @returns a http.Agent for basic auth proxy
-     */
-    proxyAgent(): http.Agent;
-    /**
      * Fetch function, using the configured NTLM Auth options.
      * @param resource - the url or Request object to fetch from
      * @param options - the fetch options
@@ -65,4 +60,12 @@ declare class ProxyFetch {
  * @returns the Fetch API function
  */
 declare function createFetch(proxyAuthOptions?: ProxyAuthOptions): (...params: any[]) => any;
+
+/**
+ * Parse the Retry-After header
+ * Spec: {@link https://tools.ietf.org/html/rfc7231#section-7.1.3}
+ * @param header - Retry-After header value
+ * @returns Number of milliseconds to sleep until the next call to getEventsFromJournal
+ */
+declare function parseRetryAfterHeader(header: string): number;
 
