@@ -57,6 +57,26 @@ test('url test (basic auth)', () => {
   })
 })
 
+/*
+  Proxy username and password: special character support
+  Ensure that the special character (here: encoded backslash in the username) is decoded in the 'auth' property.
+  See curl (e.g., with verbose output) for reference
+*/
+test('url test (basic auth) with special character in username', () => {
+  const url = 'http://domain%5Cadmin:secret@example.com/mypath/?query=foo'
+  expect(urlToHttpOptions(url)).toStrictEqual({
+    hash: '',
+    hostname: 'example.com',
+    href: 'http://domain%5Cadmin:secret@example.com/mypath/?query=foo',
+    path: undefined,
+    pathname: '/mypath/',
+    port: '',
+    protocol: 'http:',
+    search: '?query=foo',
+    auth: 'domain\\admin:secret'
+  })
+})
+
 describe('createFetch', () => {
   const mockProxyFetchFetch = jest.fn()
 
