@@ -90,6 +90,7 @@ function urlToHttpOptions (aUrl) {
  * @returns {number} Number of milliseconds to sleep until the next call to getEventsFromJournal
  */
 function parseRetryAfterHeader (header) {
+  logger.debug('Parsing Retry-After header')
   if (header.match(/^[0-9]+$/)) {
     return parseInt(header, 10) * 1000
   } else {
