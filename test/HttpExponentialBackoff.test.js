@@ -44,9 +44,7 @@ function __testRetryDelayHelper (initialDelay) {
   return jest.fn().mockImplementation(function (attempt, error, response) {
     const retryAfter = response.headers.get('Retry-After')
     if (retryAfter != null) {
-      const a = parseRetryAfterHeader(retryAfter)
-      console.log(a)
-      return a
+      return parseRetryAfterHeader(retryAfter)
     }
     return attempt * initialDelay// 1000, 2000, 4000
   })
