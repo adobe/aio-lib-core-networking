@@ -141,7 +141,9 @@ class HttpExponentialBackoff {
     return (attempt, error, response) => {
       const retryAfter = response.headers.get('Retry-After')
       if (retryAfter != null) {
-        return parseRetryAfterHeader(retryAfter)
+        const timeToWait = parseRetryAfterHeader(retryAfter)
+        logger.debug(`Request will be retried after ${timeToWait} ms`)
+        return timeToWait
       }
       return this.__getRetryDelay(initialDelayInMillis)(attempt, error, response)
     }
