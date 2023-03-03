@@ -94,6 +94,10 @@ with defaults set to max of 3 retries and initial Delay as 100ms</p>
 <dt><a href="#createFetch">createFetch([proxyAuthOptions])</a> ⇒ <code>function</code></dt>
 <dd><p>Return the appropriate Fetch function depending on proxy settings.</p>
 </dd>
+<dt><a href="#parseRetryAfterHeader">parseRetryAfterHeader(header)</a> ⇒ <code>number</code></dt>
+<dd><p>Parse the Retry-After header
+Spec: <a href="https://tools.ietf.org/html/rfc7231#section-7.1.3">https://tools.ietf.org/html/rfc7231#section-7.1.3</a></p>
+</dd>
 </dl>
 
 ## Typedefs
@@ -141,7 +145,6 @@ This provides a wrapper for fetch that facilitates proxy auth authorization.
 
 * [ProxyFetch](#ProxyFetch)
     * [new ProxyFetch(authOptions)](#new_ProxyFetch_new)
-    * [.proxyAgent()](#ProxyFetch+proxyAgent) ⇒ <code>http.Agent</code>
     * [.fetch(resource, options)](#ProxyFetch+fetch) ⇒ <code>Promise.&lt;Response&gt;</code>
 
 <a name="new_ProxyFetch_new"></a>
@@ -154,13 +157,6 @@ Initialize this class with Proxy auth options
 | --- | --- | --- |
 | authOptions | [<code>ProxyAuthOptions</code>](#ProxyAuthOptions) | the auth options to connect with |
 
-<a name="ProxyFetch+proxyAgent"></a>
-
-### proxyFetch.proxyAgent() ⇒ <code>http.Agent</code>
-Returns the http.Agent used for this proxy
-
-**Kind**: instance method of [<code>ProxyFetch</code>](#ProxyFetch)  
-**Returns**: <code>http.Agent</code> - a http.Agent for basic auth proxy  
 <a name="ProxyFetch+fetch"></a>
 
 ### proxyFetch.fetch(resource, options) ⇒ <code>Promise.&lt;Response&gt;</code>
@@ -185,6 +181,19 @@ Return the appropriate Fetch function depending on proxy settings.
 | Param | Type | Description |
 | --- | --- | --- |
 | [proxyAuthOptions] | [<code>ProxyAuthOptions</code>](#ProxyAuthOptions) | the proxy auth options |
+
+<a name="parseRetryAfterHeader"></a>
+
+## parseRetryAfterHeader(header) ⇒ <code>number</code>
+Parse the Retry-After header
+Spec: [https://tools.ietf.org/html/rfc7231#section-7.1.3](https://tools.ietf.org/html/rfc7231#section-7.1.3)
+
+**Kind**: global function  
+**Returns**: <code>number</code> - Number of milliseconds to sleep until the next call to getEventsFromJournal  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| header | <code>string</code> | Retry-After header value |
 
 <a name="RetryOptions"></a>
 

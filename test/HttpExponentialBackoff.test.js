@@ -12,6 +12,7 @@ governing permissions and limitations under the License.
 const HttpExponentialBackoff = require('../src/HttpExponentialBackoff')
 const fetchClient = new HttpExponentialBackoff()
 const fetchMock = require('node-fetch')
+const { parseRetryAfterHeader } = require('../src/utils')
 jest.mock('node-fetch')
 
 /**
@@ -25,7 +26,7 @@ jest.mock('node-fetch')
  */
 function __testRetryOnHelper (retries, low = 499, high = 600) {
   return jest.fn().mockImplementation(function (attempt, error, response) {
-    if (attempt < retries && (error !== null || (response.status > low && response.status < high))) {
+    if (attempt < retries && (error !== null || (response.status > low && response.status < high) || response.status === 429)) {
       return true
     }
     return false
@@ -41,6 +42,11 @@ function __testRetryOnHelper (retries, low = 499, high = 600) {
  */
 function __testRetryDelayHelper (initialDelay) {
   return jest.fn().mockImplementation(function (attempt, error, response) {
+    const retryAfter = response.headers.get('Retry-After')
+    const timeToWait = parseRetryAfterHeader(retryAfter)
+    if (!isNaN(timeToWait)) {
+      return timeToWait
+    }
     return attempt * initialDelay// 1000, 2000, 4000
   })
 }
@@ -107,6 +113,19 @@ test('test exponentialBackoff with no retries on 4xx errors and default retry st
   retrySpy.mockRestore()
 })
 
+test('test exponentialBackoff with 3 retries on 429 errors and default retry strategy', async () => {
+  const mockDefaultFn = __testRetryOnHelper(3)
+  const retrySpy = jest.spyOn(fetchClient, '__getRetryOn').mockImplementation((retries) => mockDefaultFn)
+  fetchMock.mockResponse('429 Too many requests', {
+    status: 429
+  })
+  const result = await fetchClient.exponentialBackoff('https://abc1.com/', { method: 'GET' }, { initialDelayInMillis: 10 })
+  expect(result.status).toBe(429)
+  expect(retrySpy).toHaveBeenCalledWith(3)
+  expect(mockDefaultFn).toHaveBeenCalledTimes(4)
+  retrySpy.mockRestore()
+})
+
 test('test exponentialBackoff with 3 retries on 5xx errors and default retry strategy', async () => {
   const mockDefaultFn = __testRetryOnHelper(3)
   const retrySpy = jest.spyOn(fetchClient, '__getRetryOn').mockImplementation((retries) => {
@@ -120,6 +139,20 @@ test('test exponentialBackoff with 3 retries on 5xx errors and default retry str
   expect(retrySpy).toHaveBeenCalledWith(3)
   expect(mockDefaultFn).toHaveBeenCalledTimes(4)
   retrySpy.mockRestore()
+})
+
+test('test exponentialBackoff with 3 retries on errors with default retry strategy and date in Retry-After header', async () => {
+  const spy = jest.spyOn(global.Date, 'now').mockImplementation(() => new Date('Mon, 13 Feb 2023 23:59:59 GMT'))
+  const header = 'Tue, 14 Feb 2023 00:00:00 GMT'
+  fetchMock.mockResponse('503 Service Unavailable', {
+    status: 503,
+    headers: {
+      'Retry-After': header
+    }
+  })
+  const result = await fetchClient.exponentialBackoff('https://abc2.com/', { method: 'GET' }, { maxRetries: 2 })
+  expect(result.status).toBe(503)
+  expect(spy).toHaveBeenCalledTimes(2)
 })
 
 test('test exponential backoff with success in first attempt and custom retryOptions', async () => {
@@ -215,7 +248,8 @@ test('test exponentialBackoff with default 3 retries on 5xx errors and custom re
 test('test exponentialBackoff with 3 retries on 5xx errors and custom retryDelay', async () => {
   const mockDefaultFn1 = __testRetryDelayHelper(100)
   fetchMock.mockResponse('503 Service Unavailable', {
-    status: 503
+    status: 503,
+    headers: {}
   })
   const result = await fetchClient.exponentialBackoff('https://abc2.com/', { method: 'GET' }, { maxRetries: 2 }, undefined, mockDefaultFn1)
   expect(result.status).toBe(503)
