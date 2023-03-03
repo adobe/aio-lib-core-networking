@@ -128,9 +128,21 @@ describe('createFetch', () => {
 })
 
 describe('parseRetryAfterHeader', () => {
-  test('numeric retry-after header', () => {
+  test('null retry after', () => {
+    const header = 'null'
+    expect(parseRetryAfterHeader(header)).toEqual(NaN)
+  })
+  test('positive integer retry-after header', () => {
     const header = '23'
     expect(parseRetryAfterHeader(header)).toEqual(23000)
+  })
+  test('negative integer retry-after header', () => {
+    const header = '-23'
+    expect(parseRetryAfterHeader(header)).toEqual(NaN)
+  })
+  test('retry-after header is 0', () => {
+    const header = '0'
+    expect(parseRetryAfterHeader(header)).toEqual(NaN)
   })
   test('date retry-after header', () => {
     const spy = jest.spyOn(global.Date, 'now').mockImplementation(() => new Date('Mon, 13 Feb 2023 23:59:59 GMT'))
@@ -141,7 +153,11 @@ describe('parseRetryAfterHeader', () => {
   test('date retry-after header older than now', () => {
     const spy = jest.spyOn(global.Date, 'now').mockImplementation(() => new Date('Tue, 14 Feb 2023 00:00:00 GMT'))
     const header = 'Mon, 13 Feb 2023 23:59:59 GMT'
-    expect(parseRetryAfterHeader(header)).toEqual(0)
+    expect(parseRetryAfterHeader(header)).toEqual(NaN)
     expect(spy).toHaveBeenCalled()
+  })
+  test('invalid retry-after header', () => {
+    const header = 'not::a::date'
+    expect(parseRetryAfterHeader(header)).toEqual(NaN)
   })
 })

@@ -43,8 +43,9 @@ function __testRetryOnHelper (retries, low = 499, high = 600) {
 function __testRetryDelayHelper (initialDelay) {
   return jest.fn().mockImplementation(function (attempt, error, response) {
     const retryAfter = response.headers.get('Retry-After')
-    if (retryAfter != null) {
-      return parseRetryAfterHeader(retryAfter)
+    const timeToWait = parseRetryAfterHeader(retryAfter)
+    if (!isNaN(timeToWait)) {
+      return timeToWait
     }
     return attempt * initialDelay// 1000, 2000, 4000
   })
@@ -247,7 +248,8 @@ test('test exponentialBackoff with default 3 retries on 5xx errors and custom re
 test('test exponentialBackoff with 3 retries on 5xx errors and custom retryDelay', async () => {
   const mockDefaultFn1 = __testRetryDelayHelper(100)
   fetchMock.mockResponse('503 Service Unavailable', {
-    status: 503
+    status: 503,
+    headers: {}
   })
   const result = await fetchClient.exponentialBackoff('https://abc2.com/', { method: 'GET' }, { maxRetries: 2 }, undefined, mockDefaultFn1)
   expect(result.status).toBe(503)
