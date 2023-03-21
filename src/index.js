@@ -11,11 +11,12 @@ governing permissions and limitations under the License.
 
 const HttpExponentialBackoff = require('./HttpExponentialBackoff')
 const ProxyFetch = require('./ProxyFetch')
-const { createFetch, getProxyOptionsFromConfig } = require('./utils')
+const { createFetch, getProxyOptionsFromConfig, parseRetryAfterHeader } = require('./utils')
 
 module.exports = {
   HttpExponentialBackoff,
   ProxyFetch,
   createFetch,
-  getProxyOptionsFromConfig
+  getProxyOptionsFromConfig,
+  parseRetryAfterHeader
 }
