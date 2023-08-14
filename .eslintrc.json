@@ -1,3 +1,14 @@
 {
-  "extends": ["@adobe/eslint-config-aio-lib-config"]
+  "extends": [
+    "@adobe/eslint-config-aio-lib-config"
+  ],
+  "rules": {
+    "jsdoc/tag-lines": [
+      "error",
+      "never",
+      {
+        "startLines": null
+      }
+    ]
+  }
 }
