@@ -60,6 +60,6 @@
     "unit-tests": "jest --config test/jest.config.js --runInBand"
   },
   "engines": {
-    "node": "^14.16 || ^16.13 || >=18"
+    "node": ">=18"
   }
 }
