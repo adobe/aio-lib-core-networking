@@ -42,6 +42,8 @@ function proxyAgent (resourceUrl, authOptions) {
     logger.warn(`proxyAgent - rejectUnauthorized is set to ${rejectUnauthorized}`)
   }
 
+  proxyOpts.ALPNProtocols = ['http/1.1']
+
   if (resourceUrl.startsWith('https')) {
     return new HttpsProxyAgent(proxyOpts)
   } else {
