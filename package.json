@@ -10,9 +10,9 @@
   },
   "bundleDependencies": [],
   "dependencies": {
-    "@adobe/aio-lib-core-config": "^3.0.0",
-    "@adobe/aio-lib-core-errors": "^3.1.0",
-    "@adobe/aio-lib-core-logging": "^2.0.0",
+    "@adobe/aio-lib-core-config": "^5.0.0",
+    "@adobe/aio-lib-core-errors": "^4.0.0",
+    "@adobe/aio-lib-core-logging": "^3.0.0",
     "fetch-retry": "^5.0.4",
     "http-proxy-agent": "^4.0.1",
     "https-proxy-agent": "2.2.4",
