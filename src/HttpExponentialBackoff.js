@@ -10,7 +10,7 @@ governing permissions and limitations under the License.
 */
 
 const DEFAULT_MAX_RETRIES = 3
-const DEFAULY_INITIAL_DELAY_MS = 100
+const DEFAULT_INITIAL_DELAY_MS = 100
 const loggerNamespace = '@adobe/aio-lib-core-networking:HttpExponentialBackoff'
 const logger = require('@adobe/aio-lib-core-logging')(loggerNamespace, { level: process.env.LOG_LEVEL })
 const { createFetch, parseRetryAfterHeader } = require('./utils')
@@ -47,7 +47,7 @@ class HttpExponentialBackoff {
     retryOn, retryDelay) {
     const {
       maxRetries = DEFAULT_MAX_RETRIES,
-      initialDelayInMillis = DEFAULY_INITIAL_DELAY_MS,
+      initialDelayInMillis = DEFAULT_INITIAL_DELAY_MS,
       proxy
     } = retryOptions
     return this.exponentialBackoffHelper(url, requestOptions,
@@ -139,7 +139,7 @@ class HttpExponentialBackoff {
    */
   __getRetryDelayWithRetryAfterHeader (initialDelayInMillis) {
     return (attempt, error, response) => {
-      const retryAfter = response.headers.get('Retry-After')
+      const retryAfter = response?.headers.get('Retry-After') || null
       const timeToWait = parseRetryAfterHeader(retryAfter)
       if (!isNaN(timeToWait)) {
         logger.debug(`Request will be retried after ${timeToWait} ms`)
