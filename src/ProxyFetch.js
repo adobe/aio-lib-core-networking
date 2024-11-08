@@ -13,8 +13,8 @@ const loggerNamespace = '@adobe/aio-lib-core-networking:ProxyFetch'
 const logger = require('@adobe/aio-lib-core-logging')(loggerNamespace, { level: process.env.LOG_LEVEL })
 const originalFetch = require('node-fetch')
 const { codes } = require('./SDKErrors')
-const HttpProxyAgent = require('http-proxy-agent')
-const HttpsProxyAgent = require('https-proxy-agent')
+const { HttpProxyAgent } = require('http-proxy-agent')
+const { HttpsProxyAgent } = require('https-proxy-agent')
 const { urlToHttpOptions } = require('./utils')
 
 /* global Response, Request */
@@ -35,19 +35,15 @@ function proxyAgent (resourceUrl, authOptions) {
     proxyOpts.auth = `${username}:${password}`
   }
 
-  // the passing on of this property to the underlying implementation only works on https-proxy-agent@2.2.4
-  // this is only used for unit-tests and passed in the constructor
   proxyOpts.rejectUnauthorized = rejectUnauthorized
   if (rejectUnauthorized === false) {
     logger.warn(`proxyAgent - rejectUnauthorized is set to ${rejectUnauthorized}`)
   }
 
-  proxyOpts.ALPNProtocols = ['http/1.1']
-
   if (resourceUrl.startsWith('https')) {
-    return new HttpsProxyAgent(proxyOpts)
+    return new HttpsProxyAgent(proxyUrl, proxyOpts)
   } else {
-    return new HttpProxyAgent(proxyOpts)
+    return new HttpProxyAgent(proxyUrl, proxyOpts)
   }
 }
 
