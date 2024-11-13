@@ -14,8 +14,8 @@
     "@adobe/aio-lib-core-errors": "^4.0.0",
     "@adobe/aio-lib-core-logging": "^3.0.0",
     "fetch-retry": "^5.0.4",
-    "http-proxy-agent": "^4.0.1",
-    "https-proxy-agent": "2.2.4",
+    "http-proxy-agent": "^7",
+    "https-proxy-agent": "^7",
     "node-fetch": "^2.6.4",
     "proxy-from-env": "^1.1.0"
   },
