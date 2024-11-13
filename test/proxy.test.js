@@ -189,14 +189,15 @@ describe('http proxy', () => {
   })
 })
 
-describe('https proxy', () => {
+describe('https proxy (self-signed)', () => {
   const protocol = 'https'
   let proxyServer, apiServer
   const portNotInUse = 3009
+  const selfSigned = true
 
   describe('no auth', () => {
     beforeAll(async () => {
-      proxyServer = await createHttpsProxy()
+      proxyServer = await createHttpsProxy({ selfSigned })
       apiServer = await createApiServer({ port: 3001, useSsl: true })
     })
 
@@ -212,29 +213,48 @@ describe('https proxy', () => {
       const testUrl = `${protocol}://localhost:${apiServerAddress.port}/mirror?${queryString.stringify(queryObject)}`
 
       const proxyUrl = proxyServer.url
-      const proxyFetch = new ProxyFetch({ proxyUrl, rejectUnauthorized: false })
-      const response = await proxyFetch.fetch(testUrl)
+      // IGNORE self-signed cert errors
+      {
+        const proxyFetch = new ProxyFetch({ proxyUrl, rejectUnauthorized: false })
+        const response = await proxyFetch.fetch(testUrl)
 
-      const json = await response.json()
-      expect(json).toStrictEqual(queryObject)
+        const json = await response.json()
+        expect(json).toStrictEqual(queryObject)
+      }
+      // DO NOT ignore self-signed cert errors
+      {
+        const proxyFetch = new ProxyFetch({ proxyUrl, rejectUnauthorized: true })
+        await expect(async () => {
+          await proxyFetch.fetch(testUrl)
+        }).rejects.toThrow('self-signed certificate in certificate chain')
+      }
     })
 
-    test('failure', async () => {
+    test('failure (non-existent port)', async () => {
       // connect to non-existent server port
       const testUrl = `${protocol}://localhost:${portNotInUse}/mirror/?foo=bar`
-
       const proxyUrl = proxyServer.url
-      const proxyFetch = new ProxyFetch({ proxyUrl, rejectUnauthorized: false })
 
-      const response = await proxyFetch.fetch(testUrl)
-      expect(response.ok).toEqual(false)
-      expect(response.status).toEqual(502)
+      // IGNORE self-signed cert errors
+      {
+        const proxyFetch = new ProxyFetch({ proxyUrl, rejectUnauthorized: false })
+        const response = await proxyFetch.fetch(testUrl)
+        expect(response.ok).toEqual(false)
+        expect(response.status).toEqual(502)
+      }
+      // DO NOT ignore self-signed cert errors
+      {
+        const proxyFetch = new ProxyFetch({ proxyUrl, rejectUnauthorized: true })
+        await expect(async () => {
+          await proxyFetch.fetch(testUrl)
+        }).rejects.toThrow('self-signed certificate in certificate chain')
+      }
     })
   })
 
   describe('basic auth', () => {
     beforeAll(async () => {
-      proxyServer = await createHttpsProxy({ useBasicAuth: true })
+      proxyServer = await createHttpsProxy({ useBasicAuth: true, selfSigned })
       apiServer = await createApiServer({ port: 3001, useSsl: true })
     })
 
@@ -253,17 +273,28 @@ describe('https proxy', () => {
         'Proxy-Authorization': 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
       }
       const proxyUrl = proxyServer.url
-      const proxyFetch = new ProxyFetch({ proxyUrl, username, password, rejectUnauthorized: false })
-
       const testUrl = `${protocol}://localhost:${apiServerPort}/mirror?${queryString.stringify(queryObject)}`
-      const response = await proxyFetch.fetch(testUrl, { headers })
-      const spy = jest.spyOn(proxyFetch, 'fetch').mockImplementation(() => testUrl)
-      const pattern = /\b^https\b/
-      expect(proxyFetch.fetch()).toMatch(new RegExp(pattern))
-      spy.mockRestore()
-      expect(response.ok).toEqual(true)
-      const json = await response.json()
-      expect(json).toStrictEqual(queryObject)
+      // IGNORE self-signed cert errors
+      {
+        const proxyFetch = new ProxyFetch({ proxyUrl, username, password, rejectUnauthorized: false })
+        const response = await proxyFetch.fetch(testUrl, { headers })
+
+        const spy = jest.spyOn(proxyFetch, 'fetch').mockImplementation(() => testUrl)
+        const pattern = /\b^https\b/
+        expect(proxyFetch.fetch()).toMatch(new RegExp(pattern))
+        spy.mockRestore()
+
+        expect(response.ok).toEqual(true)
+        const json = await response.json()
+        expect(json).toStrictEqual(queryObject)
+      }
+      // DO NOT ignore self-signed cert errors
+      {
+        const proxyFetch = new ProxyFetch({ proxyUrl, rejectUnauthorized: true })
+        await expect(async () => {
+          await proxyFetch.fetch(testUrl)
+        }).rejects.toThrow('self-signed certificate in certificate chain')
+      }
     })
 
     test('failure', async () => {
@@ -276,22 +307,33 @@ describe('https proxy', () => {
         'Proxy-Authorization': 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
       }
       const proxyUrl = proxyServer.url
-      const proxyFetch = new ProxyFetch({ proxyUrl, username, password, rejectUnauthorized: false })
-
       const testUrl = `${protocol}://localhost:${apiServerPort}/mirror?${queryString.stringify(queryObject)}`
-      const response = await proxyFetch.fetch(testUrl, { headers })
-      const spy = jest.spyOn(proxyFetch, 'fetch').mockImplementation(() => testUrl)
-      const pattern = /\b^http\b/
-      expect(proxyFetch.fetch()).not.toMatch(new RegExp(pattern))
-      spy.mockRestore()
-      expect(response.ok).toEqual(false)
-      expect(response.status).toEqual(403)
+      // IGNORE self-signed cert errors
+      {
+        const proxyFetch = new ProxyFetch({ proxyUrl, username, password, rejectUnauthorized: false })
+        const response = await proxyFetch.fetch(testUrl, { headers })
+
+        const spy = jest.spyOn(proxyFetch, 'fetch').mockImplementation(() => testUrl)
+        const pattern = /\b^http\b/
+        expect(proxyFetch.fetch()).not.toMatch(new RegExp(pattern))
+        spy.mockRestore()
+
+        expect(response.ok).toEqual(false)
+        expect(response.status).toEqual(403)
+      }
+      // DO NOT ignore self-signed cert errors
+      {
+        const proxyFetch = new ProxyFetch({ proxyUrl, rejectUnauthorized: true })
+        await expect(async () => {
+          await proxyFetch.fetch(testUrl)
+        }).rejects.toThrow('self-signed certificate in certificate chain')
+      }
     })
   })
 
   describe('HttpExponentialBackoff', () => {
     beforeAll(async () => {
-      proxyServer = await createHttpsProxy()
+      proxyServer = await createHttpsProxy({ selfSigned })
       apiServer = await createApiServer({ port: 3001, useSsl: true })
     })
 
@@ -306,27 +348,45 @@ describe('https proxy', () => {
 
       const testUrl = `${protocol}://localhost:${apiServerPort}/mirror?${queryString.stringify(queryObject)}`
       const proxyUrl = proxyServer.url
-
       const fetchRetry = new HttpExponentialBackoff()
-      const response = await fetchRetry.exponentialBackoff(testUrl, { method: 'GET' }, {
-        proxy: { proxyUrl, rejectUnauthorized: false }
-      })
-      const json = await response.json()
-      expect(json).toStrictEqual(queryObject)
+
+      // IGNORE self-signed cert errors
+      {
+        const response = await fetchRetry.exponentialBackoff(testUrl, { method: 'GET' }, {
+          proxy: { proxyUrl, rejectUnauthorized: false }
+        })
+        const json = await response.json()
+        expect(json).toStrictEqual(queryObject)
+      }
+      // DO NOT ignore self-signed cert errors
+      await expect(async () => {
+        return fetchRetry.exponentialBackoff(testUrl, { method: 'GET' }, {
+          proxy: { proxyUrl, rejectUnauthorized: true }
+        })
+      }).rejects.toThrow('self-signed certificate in certificate chain')
     })
 
     test('failure', async () => {
       // connect to non-existent server port
       const testUrl = `${protocol}://localhost:3009/mirror/?foo=bar`
       const proxyUrl = proxyServer.url
-
       const fetchRetry = new HttpExponentialBackoff()
-      const response = await fetchRetry.exponentialBackoff(testUrl, { method: 'GET' }, {
-        proxy: { proxyUrl, rejectUnauthorized: false },
-        maxRetries: 2
-      }, [], 0) // retryDelay must be zero for test timings
-      expect(response.ok).toEqual(false)
-      expect(response.status).toEqual(502)
+
+      // IGNORE self-signed cert errors
+      {
+        const response = await fetchRetry.exponentialBackoff(testUrl, { method: 'GET' }, {
+          proxy: { proxyUrl, rejectUnauthorized: false },
+          maxRetries: 2
+        }, [], 0) // retryDelay must be zero for test timings
+        expect(response.ok).toEqual(false)
+        expect(response.status).toEqual(502)
+      }
+      // DO NOT ignore self-signed cert errors
+      await expect(async () => {
+        return fetchRetry.exponentialBackoff(testUrl, { method: 'GET' }, {
+          proxy: { proxyUrl, rejectUnauthorized: true }
+        })
+      }).rejects.toThrow('self-signed certificate in certificate chain')
     })
   })
 })
