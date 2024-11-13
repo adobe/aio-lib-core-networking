@@ -42,7 +42,7 @@ function __testRetryOnHelper (retries, low = 499, high = 600) {
  */
 function __testRetryDelayHelper (initialDelay) {
   return jest.fn().mockImplementation(function (attempt, error, response) {
-    const retryAfter = response.headers.get('Retry-After')
+    const retryAfter = response?.headers.get('Retry-After')
     const timeToWait = parseRetryAfterHeader(retryAfter)
     if (!isNaN(timeToWait)) {
       return timeToWait
@@ -264,4 +264,11 @@ test('exponentialBackoff with no retries on 4xx errors and custom retryDelay', a
   const result = await fetchClient.exponentialBackoff('https://abc1.com/', { method: 'GET' }, { maxRetries: 4, initialDelayInMillis: 1 }, undefined, mockDefaultFn)
   expect(result.status).toBe(404)
   expect(mockDefaultFn).toHaveBeenCalledTimes(0)
+})
+
+test('exponentialBackoff fetch throws', async () => {
+  fetchMock.mockReject(new Error('this is a fetch error, no response is defined'))
+  await expect(
+    fetchClient.exponentialBackoff('https://abc1.com/', { method: 'GET' })
+  ).rejects.toThrow('this is a fetch error, no response is defined')
 })
