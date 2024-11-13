@@ -25,6 +25,7 @@ const { urlToHttpOptions } = require('./utils')
  *
  * See https://github.com/TooTallNate/proxy-agents/issues/89
  * An alternative is to use https://github.com/delvedor/hpagent
+ * @private
  */
 class PatchedHttpsProxyAgent extends HttpsProxyAgent {
   constructor (proxyUrl, opts) {
@@ -41,11 +42,11 @@ class PatchedHttpsProxyAgent extends HttpsProxyAgent {
  * @private
  *
  * @param {string} resourceUrl an endpoint url for proxyAgent selection
- * @param {object} authOptions an object which contains auth information
+ * @param {ProxyAuthOptions} proxyOptions an object which contains auth information
  * @returns {http.Agent} a http.Agent for basic auth proxy
  */
-function proxyAgent (resourceUrl, authOptions) {
-  const { proxyUrl, username, password, rejectUnauthorized = true } = authOptions
+function proxyAgent (resourceUrl, proxyAuthOptions) {
+  const { proxyUrl, username, password, rejectUnauthorized = true } = proxyAuthOptions
   const proxyOpts = urlToHttpOptions(proxyUrl)
 
   if (!proxyOpts.auth && username && password) {
@@ -70,6 +71,8 @@ function proxyAgent (resourceUrl, authOptions) {
  *
  * @typedef {object} ProxyAuthOptions
  * @property {string} proxyUrl - the proxy's url
+ * @property {string} [username] the username for basic auth
+ * @property {string} [password] the password for basic auth
  * @property {boolean} rejectUnauthorized - set to false to not reject unauthorized server certs
  */
 
@@ -80,11 +83,11 @@ class ProxyFetch {
   /**
    * Initialize this class with Proxy auth options
    *
-   * @param {ProxyAuthOptions} authOptions the auth options to connect with
+   * @param {ProxyAuthOptions} proxyAuthOptions the auth options to connect with
    */
-  constructor (authOptions = {}) {
-    logger.debug(`constructor - authOptions: ${JSON.stringify(authOptions)}`)
-    const { proxyUrl } = authOptions
+  constructor (proxyAuthOptions = {}) {
+    logger.debug(`constructor - authOptions: ${JSON.stringify(proxyAuthOptions)}`)
+    const { proxyUrl } = proxyAuthOptions
     const { auth } = urlToHttpOptions(proxyUrl)
 
     if (!proxyUrl) {
@@ -96,7 +99,7 @@ class ProxyFetch {
       logger.debug('constructor: username or password not set, proxy is anonymous.')
     }
 
-    this.authOptions = authOptions
+    this.authOptions = proxyAuthOptions
     return this
   }
 

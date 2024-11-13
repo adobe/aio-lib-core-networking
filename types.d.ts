@@ -32,19 +32,23 @@ declare class HttpExponentialBackoff {
 /**
  * Proxy Auth Options
  * @property proxyUrl - the proxy's url
+ * @property [username] - the username for basic auth
+ * @property [password] - the password for basic auth
  * @property rejectUnauthorized - set to false to not reject unauthorized server certs
  */
 declare type ProxyAuthOptions = {
     proxyUrl: string;
+    username?: string;
+    password?: string;
     rejectUnauthorized: boolean;
 };
 
 /**
  * Initialize this class with Proxy auth options
- * @param authOptions - the auth options to connect with
+ * @param proxyAuthOptions - the auth options to connect with
  */
 declare class ProxyFetch {
-    constructor(authOptions: ProxyAuthOptions);
+    constructor(proxyAuthOptions: ProxyAuthOptions);
     /**
      * Fetch function, using the configured NTLM Auth options.
      * @param resource - the url or Request object to fetch from

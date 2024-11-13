@@ -144,18 +144,18 @@ This provides a wrapper for fetch that facilitates proxy auth authorization.
 **Kind**: global class  
 
 * [ProxyFetch](#ProxyFetch)
-    * [new ProxyFetch(authOptions)](#new_ProxyFetch_new)
+    * [new ProxyFetch(proxyAuthOptions)](#new_ProxyFetch_new)
     * [.fetch(resource, options)](#ProxyFetch+fetch) ⇒ <code>Promise.&lt;Response&gt;</code>
 
 <a name="new_ProxyFetch_new"></a>
 
-### new ProxyFetch(authOptions)
+### new ProxyFetch(proxyAuthOptions)
 Initialize this class with Proxy auth options
 
 
 | Param | Type | Description |
 | --- | --- | --- |
-| authOptions | [<code>ProxyAuthOptions</code>](#ProxyAuthOptions) | the auth options to connect with |
+| proxyAuthOptions | [<code>ProxyAuthOptions</code>](#ProxyAuthOptions) | the auth options to connect with |
 
 <a name="ProxyFetch+fetch"></a>
 
@@ -220,6 +220,8 @@ Proxy Auth Options
 | Name | Type | Description |
 | --- | --- | --- |
 | proxyUrl | <code>string</code> | the proxy's url |
+| [username] | <code>string</code> | the username for basic auth |
+| [password] | <code>string</code> | the password for basic auth |
 | rejectUnauthorized | <code>boolean</code> | set to false to not reject unauthorized server certs |
 
 ### Debug Logs
