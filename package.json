@@ -45,7 +45,7 @@
     "jsdoc": "^3.6.3",
     "jsdoc-to-markdown": "^5.0.3",
     "openapi-schema-validator": "^12.1.0",
-    "query-string": "^7.0.1",
+    "query-string": "^9.1.1",
     "stdout-stderr": "^0.1.9",
     "tsd-jsdoc": "^2.4.0",
     "typescript": "^5.1.6"
