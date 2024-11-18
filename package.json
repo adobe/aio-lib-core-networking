@@ -13,7 +13,7 @@
     "@adobe/aio-lib-core-config": "^5.0.0",
     "@adobe/aio-lib-core-errors": "^4.0.0",
     "@adobe/aio-lib-core-logging": "^3.0.0",
-    "fetch-retry": "^5.0.4",
+    "fetch-retry": "^6.0.0",
     "http-proxy-agent": "^7",
     "https-proxy-agent": "^7",
     "node-fetch": "^2.6.4",
