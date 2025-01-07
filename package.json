@@ -16,8 +16,13 @@
     "fetch-retry": "^5.0.4",
     "http-proxy-agent": "^7",
     "https-proxy-agent": "^7",
-    "node-fetch": "^2.6.4",
+    "node-fetch": "^2.x",
     "proxy-from-env": "^1.1.0"
+  },
+  "overrides": {
+    "node-fetch@^2.x": {
+      "whatwg-url": "14.x"
+    }
   },
   "deprecated": false,
   "description": "Adobe I/O Lib Core Networking",
