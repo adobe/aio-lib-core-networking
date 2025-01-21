@@ -10,7 +10,7 @@ governing permissions and limitations under the License.
 */
 
 const url = require('url')
-const originalFetch = require('node-fetch')
+const originalFetch = global.fetch
 const { getProxyForUrl } = require('proxy-from-env')
 const loggerNamespace = '@adobe/aio-lib-core-networking/utils'
 const logger = require('@adobe/aio-lib-core-logging')(loggerNamespace, { level: process.env.LOG_LEVEL })

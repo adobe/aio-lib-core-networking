@@ -13,10 +13,7 @@ const { urlToHttpOptions, createFetch, parseRetryAfterHeader } = require('../src
 const { ProxyFetch } = require('../src/index')
 const { getProxyForUrl } = require('proxy-from-env')
 
-const fetchMock = require('node-fetch')
-
 jest.mock('proxy-from-env')
-jest.mock('node-fetch')
 
 test('exports', () => {
   expect(typeof urlToHttpOptions).toEqual('function')
@@ -83,6 +80,7 @@ describe('createFetch', () => {
 
   beforeEach(() => {
     jest.spyOn(ProxyFetch.prototype, 'fetch').mockImplementation(mockProxyFetchFetch)
+    global.setFetchMock()
   })
 
   afterEach(() => {
@@ -92,15 +90,15 @@ describe('createFetch', () => {
   test('default (no proxy)', async () => {
     const body = 'this is some body text'
     const status = 200
-    fetchMock.mockResponse(body, { status })
+    global.setFetchMock({ body, status })
 
-    // this should use node-fetch
+    // this should use global fetch
     const newFetch = createFetch()
     const response = await newFetch('http://some.server')
     expect(response.body.toString()).toEqual(body)
     expect(response.status).toEqual(status)
 
-    // the fetch is node-fetch, it should have Request, Response, Headers classes
+    // the fetch is node built-in fetch, it should have Request, Response, Headers classes
     expect(typeof newFetch.Request).toEqual('function')
     expect(typeof newFetch.Response).toEqual('function')
     expect(typeof newFetch.Headers).toEqual('function')

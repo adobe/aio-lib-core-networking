@@ -11,7 +11,7 @@ governing permissions and limitations under the License.
 
 const loggerNamespace = '@adobe/aio-lib-core-networking:ProxyFetch'
 const logger = require('@adobe/aio-lib-core-logging')(loggerNamespace, { level: process.env.LOG_LEVEL })
-const originalFetch = require('node-fetch')
+const originalFetch = global.fetch
 const { codes } = require('./SDKErrors')
 const { HttpProxyAgent } = require('http-proxy-agent')
 const { HttpsProxyAgent } = require('https-proxy-agent')

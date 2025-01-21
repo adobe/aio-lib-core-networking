@@ -19,10 +19,8 @@ const url = require('url')
 
 jest.mock('proxy-from-env')
 
-// unmock node-fetch
-jest.mock('node-fetch', () =>
-  jest.requireActual('node-fetch')
-)
+// unmock fetch
+global.fetch = global.originalFetch
 
 beforeEach(() => {
   jest.useRealTimers()
@@ -64,7 +62,7 @@ describe('http proxy', () => {
       const response = await proxyFetch.fetch(testUrl)
 
       const json = await response.json()
-      expect(json).toStrictEqual(queryObject)
+      expect(json).toEqual(queryObject)
     })
 
     test('failure', async () => {
@@ -116,7 +114,7 @@ describe('http proxy', () => {
       spy.mockRestore()
       expect(response.ok).toEqual(true)
       const json = await response.json()
-      expect(json).toStrictEqual(queryObject)
+      expect(json).toEqual(queryObject)
     })
 
     test('failure', async () => {
@@ -170,7 +168,7 @@ describe('http proxy', () => {
         proxy: { proxyUrl }
       })
       const json = await response.json()
-      expect(json).toStrictEqual(queryObject)
+      expect(json).toEqual(queryObject)
     })
 
     test('failure', async () => {
@@ -219,7 +217,7 @@ describe('https proxy (self-signed)', () => {
         const response = await proxyFetch.fetch(testUrl)
 
         const json = await response.json()
-        expect(json).toStrictEqual(queryObject)
+        expect(json).toEqual(queryObject)
       }
       // DO NOT ignore self-signed cert errors
       {
@@ -286,7 +284,7 @@ describe('https proxy (self-signed)', () => {
 
         expect(response.ok).toEqual(true)
         const json = await response.json()
-        expect(json).toStrictEqual(queryObject)
+        expect(json).toEqual(queryObject)
       }
       // DO NOT ignore self-signed cert errors
       {
@@ -356,7 +354,7 @@ describe('https proxy (self-signed)', () => {
           proxy: { proxyUrl, rejectUnauthorized: false }
         })
         const json = await response.json()
-        expect(json).toStrictEqual(queryObject)
+        expect(json).toEqual(queryObject)
       }
       // DO NOT ignore self-signed cert errors
       await expect(async () => {

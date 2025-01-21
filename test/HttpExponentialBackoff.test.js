@@ -11,9 +11,7 @@ governing permissions and limitations under the License.
 
 const HttpExponentialBackoff = require('../src/HttpExponentialBackoff')
 const fetchClient = new HttpExponentialBackoff()
-const fetchMock = require('node-fetch')
 const { parseRetryAfterHeader } = require('../src/utils')
-jest.mock('node-fetch')
 
 /**
  * Test Helper to be used to create a mock response for retryOn and track the number of times it was invoked
@@ -54,6 +52,7 @@ function __testRetryDelayHelper (initialDelay) {
 beforeEach(() => {
   jest.clearAllMocks()
   jest.useRealTimers()
+  global.setFetchMock()
 })
 
 test('exponential backoff with success in first attempt without mock retryOn', async () => {
@@ -63,10 +62,9 @@ test('exponential backoff with success in first attempt without mock retryOn', a
 
 test('exponentialBackoff with no retries on 4xx errors without mock retryOn', async () => {
   const retrySpy = jest.spyOn(fetchClient, '__getRetryOn')
-  fetchMock.mockResponse('404 Not Found', {
-    status: 404
-  })
+  global.setFetchMock({ body: '404 Not Found', status: 404 })
   const result = await fetchClient.exponentialBackoff('https://abc1.com/', { method: 'GET' })
+
   expect(result.status).toBe(404)
   expect(retrySpy).toHaveBeenCalledWith(3)
   retrySpy.mockRestore()
@@ -74,10 +72,9 @@ test('exponentialBackoff with no retries on 4xx errors without mock retryOn', as
 
 test('exponentialBackoff with 3 retries on 5xx errors without mock retryOn', async () => {
   const retrySpy = jest.spyOn(fetchClient, '__getRetryOn')
-  fetchMock.mockResponse('500 Internal Server Error', {
-    status: 500
-  })
+  global.setFetchMock({ body: '500 Internal Server Error', status: 500 })
   const result = await fetchClient.exponentialBackoff('https://abc1.com/', { method: 'GET' }, { initialDelayInMillis: 10 })
+
   expect(result.status).toBe(500)
   expect(retrySpy).toHaveBeenCalledWith(3)
   retrySpy.mockRestore()
@@ -88,10 +85,9 @@ test('exponential backoff with success in first attempt', async () => {
   const retrySpy = jest.spyOn(fetchClient, '__getRetryOn').mockImplementation((retries) => {
     return mockDefaultFn
   })
-  fetchMock.mockResponse('200 OK', {
-    status: 200
-  })
+  global.setFetchMock({ body: '200 OK', status: 200 })
   const result = await fetchClient.exponentialBackoff('https://abc.com/', { method: 'GET' })
+
   expect(result.status).toBe(200)
   expect(retrySpy).toHaveBeenCalledWith(3)
   expect(mockDefaultFn).toHaveBeenCalledTimes(1)
@@ -103,10 +99,9 @@ test('exponentialBackoff with no retries on 4xx errors and default retry strateg
   const retrySpy = jest.spyOn(fetchClient, '__getRetryOn').mockImplementation((retries) => {
     return mockDefaultFn
   })
-  fetchMock.mockResponse('404 Not Found', {
-    status: 404
-  })
+  global.setFetchMock({ body: '404 Not Found', status: 404 })
   const result = await fetchClient.exponentialBackoff('https://abc1.com/', { method: 'GET' })
+
   expect(result.status).toBe(404)
   expect(retrySpy).toHaveBeenCalledWith(3)
   expect(mockDefaultFn).toHaveBeenCalledTimes(1)
@@ -116,10 +111,9 @@ test('exponentialBackoff with no retries on 4xx errors and default retry strateg
 test('exponentialBackoff with 3 retries on 429 errors and default retry strategy', async () => {
   const mockDefaultFn = __testRetryOnHelper(3)
   const retrySpy = jest.spyOn(fetchClient, '__getRetryOn').mockImplementation((retries) => mockDefaultFn)
-  fetchMock.mockResponse('429 Too many requests', {
-    status: 429
-  })
+  global.setFetchMock({ body: '429 Too many requests', status: 429 })
   const result = await fetchClient.exponentialBackoff('https://abc1.com/', { method: 'GET' }, { initialDelayInMillis: 10 })
+
   expect(result.status).toBe(429)
   expect(retrySpy).toHaveBeenCalledWith(3)
   expect(mockDefaultFn).toHaveBeenCalledTimes(4)
@@ -131,10 +125,9 @@ test('exponentialBackoff with 3 retries on 5xx errors and default retry strategy
   const retrySpy = jest.spyOn(fetchClient, '__getRetryOn').mockImplementation((retries) => {
     return mockDefaultFn
   })
-  fetchMock.mockResponse('500 Internal Server Error', {
-    status: 500
-  })
+  global.setFetchMock({ body: '500 Internal Server Error', status: 500 })
   const result = await fetchClient.exponentialBackoff('https://abc1.com/', { method: 'GET' }, { initialDelayInMillis: 10 })
+
   expect(result.status).toBe(500)
   expect(retrySpy).toHaveBeenCalledWith(3)
   expect(mockDefaultFn).toHaveBeenCalledTimes(4)
@@ -144,12 +137,8 @@ test('exponentialBackoff with 3 retries on 5xx errors and default retry strategy
 test('exponentialBackoff with 3 retries on errors with default retry strategy and date in Retry-After header', async () => {
   const spy = jest.spyOn(global.Date, 'now').mockImplementation(() => new Date('Mon, 13 Feb 2023 23:59:59 GMT'))
   const header = 'Tue, 14 Feb 2023 00:00:00 GMT'
-  fetchMock.mockResponse('503 Service Unavailable', {
-    status: 503,
-    headers: {
-      'Retry-After': header
-    }
-  })
+  global.setFetchMock({ body: '503 Service Unavailable', status: 503, headers: { 'Retry-After': header } })
+
   const result = await fetchClient.exponentialBackoff('https://abc2.com/', { method: 'GET' }, { maxRetries: 2 })
   expect(result.status).toBe(503)
   expect(spy).toHaveBeenCalledTimes(2)
@@ -160,10 +149,9 @@ test('exponential backoff with success in first attempt and custom retryOptions'
   const retrySpy = jest.spyOn(fetchClient, '__getRetryOn').mockImplementation((retries) => {
     return mockDefaultFn
   })
-  fetchMock.mockResponse('200 OK', {
-    status: 200
-  })
+  global.setFetchMock({ body: '200 OK', status: 200 })
   const result = await fetchClient.exponentialBackoff('https://abc.com/', { method: 'GET' }, { maxRetries: 2 })
+
   expect(result.status).toBe(200)
   expect(retrySpy).toHaveBeenCalledWith(2)
   expect(mockDefaultFn).toHaveBeenCalledTimes(1)
@@ -175,10 +163,9 @@ test('exponentialBackoff with no retries on 4xx errors and custom retryOptions',
   const retrySpy = jest.spyOn(fetchClient, '__getRetryOn').mockImplementation((retries) => {
     return mockDefaultFn
   })
-  fetchMock.mockResponse('404 Not Found', {
-    status: 404
-  })
+  global.setFetchMock({ body: '404 Not Found', status: 404 })
   const result = await fetchClient.exponentialBackoff('https://abc1.com/', { method: 'GET' }, { maxRetries: 1 })
+
   expect(result.status).toBe(404)
   expect(retrySpy).toHaveBeenCalledWith(1)
   expect(mockDefaultFn).toHaveBeenCalledTimes(1)
@@ -190,10 +177,9 @@ test('exponentialBackoff with 3 retries on 5xx errors and custom retryOptions', 
   const retrySpy = jest.spyOn(fetchClient, '__getRetryOn').mockImplementation((retries) => {
     return mockDefaultFn
   })
-  fetchMock.mockResponse('500 Internal Server Error', {
-    status: 500
-  })
+  global.setFetchMock({ body: '500 Internal Server Error', status: 500 })
   const result = await fetchClient.exponentialBackoff('https://abc1.com/', { method: 'GET' }, { maxRetries: 2, initialDelayInMillis: 10 })
+
   expect(result.status).toBe(500)
   expect(retrySpy).toHaveBeenCalledWith(2)
   expect(mockDefaultFn).toHaveBeenCalledTimes(3)
@@ -202,20 +188,18 @@ test('exponentialBackoff with 3 retries on 5xx errors and custom retryOptions', 
 
 test('exponential backoff with success in first attempt and custom retryOn', async () => {
   const mockDefaultFn = __testRetryOnHelper(2, 399, 500)
-  fetchMock.mockResponse('200 OK', {
-    status: 200
-  })
+  global.setFetchMock({ body: '200 OK', status: 200 })
   const result = await fetchClient.exponentialBackoff('https://abc.com/', { method: 'GET' }, { maxRetries: 2 }, mockDefaultFn)
+
   expect(result.status).toBe(200)
   expect(mockDefaultFn).toHaveBeenCalledTimes(1)
 })
 
 test('exponentialBackoff with no retries on 4xx errors and custom retryOn', async () => {
   const mockDefaultFn = __testRetryOnHelper(2, 399, 500)
-  fetchMock.mockResponse('404 Not Found', {
-    status: 404
-  })
+  global.setFetchMock({ body: '404 Not Found', status: 404 })
   const result = await fetchClient.exponentialBackoff('https://abc1.com/', { method: 'GET' }, { maxRetries: 4 }, mockDefaultFn)
+
   expect(result.status).toBe(404)
   // custom retryOn is initialised with 2 retries
   expect(mockDefaultFn).toHaveBeenCalledTimes(3)
@@ -224,10 +208,9 @@ test('exponentialBackoff with no retries on 4xx errors and custom retryOn', asyn
 test('exponentialBackoff with 3 retries on 5xx errors and custom retryOn', async () => {
   const mockDefaultFn = __testRetryOnHelper(2, 399, 500)
   const retrySpy = jest.spyOn(fetchClient, '__getRetryOn')
-  fetchMock.mockResponse('500 Internal Server Error', {
-    status: 500
-  })
+  global.setFetchMock({ body: '500 Internal Server Error', status: 500 })
   const result = await fetchClient.exponentialBackoff('https://abc1.com/', { method: 'GET' }, { initialDelayInMillis: 10 }, mockDefaultFn)
+
   expect(result.status).toBe(500)
   // default retryOn is initialised with 3 retries
   expect(retrySpy).toHaveBeenCalledWith(3)
@@ -238,36 +221,32 @@ test('exponentialBackoff with 3 retries on 5xx errors and custom retryOn', async
 
 test('exponentialBackoff with default 3 retries on 5xx errors and custom retryOn as array', async () => {
   const mockDefaultFn = [429, 500, 503]
-  fetchMock.mockResponse('429 Too Many Requests', {
-    status: 429
-  })
+  global.setFetchMock({ body: '429 Too many requests', status: 429 })
   const result = await fetchClient.exponentialBackoff('https://abc1.com/', { method: 'GET' }, { initialDelayInMillis: 10 }, mockDefaultFn)
+
   expect(result.status).toBe(429)
 })
 
 test('exponentialBackoff with 3 retries on 5xx errors and custom retryDelay', async () => {
   const mockDefaultFn1 = __testRetryDelayHelper(100)
-  fetchMock.mockResponse('503 Service Unavailable', {
-    status: 503,
-    headers: {}
-  })
+  global.setFetchMock({ body: '503 Service Unavailable', status: 503, headers: { } })
   const result = await fetchClient.exponentialBackoff('https://abc2.com/', { method: 'GET' }, { maxRetries: 2 }, undefined, mockDefaultFn1)
+
   expect(result.status).toBe(503)
   expect(mockDefaultFn1).toHaveBeenCalledTimes(2)
 })
 
 test('exponentialBackoff with no retries on 4xx errors and custom retryDelay', async () => {
   const mockDefaultFn = __testRetryDelayHelper(100)
-  fetchMock.mockResponse('404 Not Found', {
-    status: 404
-  })
+  global.setFetchMock({ body: '404 Not Found', status: 404 })
   const result = await fetchClient.exponentialBackoff('https://abc1.com/', { method: 'GET' }, { maxRetries: 4, initialDelayInMillis: 1 }, undefined, mockDefaultFn)
+
   expect(result.status).toBe(404)
   expect(mockDefaultFn).toHaveBeenCalledTimes(0)
 })
 
 test('exponentialBackoff fetch throws', async () => {
-  fetchMock.mockReject(new Error('this is a fetch error, no response is defined'))
+  global.fetch.mockRejectedValue(new Error('this is a fetch error, no response is defined'))
   await expect(
     fetchClient.exponentialBackoff('https://abc1.com/', { method: 'GET' })
   ).rejects.toThrow('this is a fetch error, no response is defined')

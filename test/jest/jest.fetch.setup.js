@@ -9,6 +9,14 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-const fetchMock = require('jest-fetch-mock')
+global.originalFetch = global.fetch
 
-jest.setMock('node-fetch', fetchMock)
+global.setFetchMock = ({ ok = true, status = 200, body = '', headers = {}, json = {} } = {}) => {
+  global.fetch = jest.fn().mockResolvedValue({
+    ok,
+    body,
+    headers,
+    status,
+    json: () => ok ? Promise.resolve(json) : Promise.reject(json)
+  })
+}
