@@ -91,7 +91,7 @@ with defaults set to max of 3 retries and initial Delay as 100ms</p>
 ## Functions
 
 <dl>
-<dt><a href="#createFetch">createFetch([proxyAuthOptions])</a> ⇒ <code>function</code></dt>
+<dt><a href="#createFetch">createFetch([proxyOptions])</a> ⇒ <code>function</code></dt>
 <dd><p>Return the appropriate Fetch function depending on proxy settings.</p>
 </dd>
 <dt><a href="#parseRetryAfterHeader">parseRetryAfterHeader(header)</a> ⇒ <code>number</code></dt>
@@ -106,7 +106,7 @@ Spec: <a href="https://tools.ietf.org/html/rfc7231#section-7.1.3">https://tools.
 <dt><a href="#RetryOptions">RetryOptions</a> : <code>object</code></dt>
 <dd><p>Fetch Retry Options</p>
 </dd>
-<dt><a href="#ProxyAuthOptions">ProxyAuthOptions</a> : <code>object</code></dt>
+<dt><a href="#ProxyOptions">ProxyOptions</a> : <code>object</code></dt>
 <dd><p>Proxy Auth Options</p>
 </dd>
 </dl>
@@ -119,6 +119,22 @@ The retries use exponential backoff strategy
 with defaults set to max of 3 retries and initial Delay as 100ms
 
 **Kind**: global class  
+
+* [HttpExponentialBackoff](#HttpExponentialBackoff)
+    * [new HttpExponentialBackoff([options])](#new_HttpExponentialBackoff_new)
+    * [.exponentialBackoff(url, requestOptions, [retryOptions], [retryOn], [retryDelay])](#HttpExponentialBackoff+exponentialBackoff) ⇒ <code>Promise.&lt;Response&gt;</code>
+
+<a name="new_HttpExponentialBackoff_new"></a>
+
+### new HttpExponentialBackoff([options])
+Creates an instance of HttpExponentialBackoff
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [options] | <code>object</code> | configuration options |
+| [options.logLevel] | <code>string</code> | the log level to use (default: process.env.LOG_LEVEL or 'info') |
+
 <a name="HttpExponentialBackoff+exponentialBackoff"></a>
 
 ### httpExponentialBackoff.exponentialBackoff(url, requestOptions, [retryOptions], [retryOn], [retryDelay]) ⇒ <code>Promise.&lt;Response&gt;</code>
@@ -144,18 +160,18 @@ This provides a wrapper for fetch that facilitates proxy auth authorization.
 **Kind**: global class  
 
 * [ProxyFetch](#ProxyFetch)
-    * [new ProxyFetch(proxyAuthOptions)](#new_ProxyFetch_new)
+    * [new ProxyFetch(proxyOptions)](#new_ProxyFetch_new)
     * [.fetch(resource, options)](#ProxyFetch+fetch) ⇒ <code>Promise.&lt;Response&gt;</code>
 
 <a name="new_ProxyFetch_new"></a>
 
-### new ProxyFetch(proxyAuthOptions)
+### new ProxyFetch(proxyOptions)
 Initialize this class with Proxy auth options
 
 
 | Param | Type | Description |
 | --- | --- | --- |
-| proxyAuthOptions | [<code>ProxyAuthOptions</code>](#ProxyAuthOptions) | the auth options to connect with |
+| proxyOptions | [<code>ProxyOptions</code>](#ProxyOptions) | the auth options to connect with |
 
 <a name="ProxyFetch+fetch"></a>
 
@@ -172,7 +188,7 @@ Fetch function, using the configured NTLM Auth options.
 
 <a name="createFetch"></a>
 
-## createFetch([proxyAuthOptions]) ⇒ <code>function</code>
+## createFetch([proxyOptions]) ⇒ <code>function</code>
 Return the appropriate Fetch function depending on proxy settings.
 
 **Kind**: global function  
@@ -180,7 +196,7 @@ Return the appropriate Fetch function depending on proxy settings.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| [proxyAuthOptions] | [<code>ProxyAuthOptions</code>](#ProxyAuthOptions) | the proxy auth options |
+| [proxyOptions] | [<code>ProxyOptions</code>](#ProxyOptions) | the proxy options |
 
 <a name="parseRetryAfterHeader"></a>
 
@@ -207,11 +223,11 @@ Fetch Retry Options
 | --- | --- | --- |
 | maxRetries | <code>number</code> | the maximum number of retries to try (default:3) |
 | initialDelayInMillis | <code>number</code> | the initial delay in milliseconds (default:100ms) |
-| proxy | [<code>ProxyAuthOptions</code>](#ProxyAuthOptions) | the (optional) proxy auth options |
+| proxy | [<code>ProxyOptions</code>](#ProxyOptions) | the (optional) proxy auth options |
 
-<a name="ProxyAuthOptions"></a>
+<a name="ProxyOptions"></a>
 
-## ProxyAuthOptions : <code>object</code>
+## ProxyOptions : <code>object</code>
 Proxy Auth Options
 
 **Kind**: global typedef  
@@ -223,6 +239,7 @@ Proxy Auth Options
 | [username] | <code>string</code> | the username for basic auth |
 | [password] | <code>string</code> | the password for basic auth |
 | rejectUnauthorized | <code>boolean</code> | set to false to not reject unauthorized server certs |
+| [logLevel] | <code>string</code> | the log level to use (default: process.env.LOG_LEVEL or 'info') |
 
 ### Debug Logs
 

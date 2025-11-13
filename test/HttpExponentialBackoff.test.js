@@ -153,6 +153,53 @@ test('exponentialBackoff with 3 retries on errors with default retry strategy an
   const result = await fetchClient.exponentialBackoff('https://abc2.com/', { method: 'GET' }, { maxRetries: 2 })
   expect(result.status).toBe(503)
   expect(spy).toHaveBeenCalledTimes(2)
+  spy.mockRestore()
+})
+
+test('exponentialBackoff with 2 retries on errors with numeric Retry-After header', async () => {
+  const retrySpy = jest.spyOn(fetchClient, '__getRetryDelayWithRetryAfterHeader')
+  fetchMock.mockResponse('429 Too Many Requests', {
+    status: 429,
+    headers: {
+      'Retry-After': '5'
+    }
+  })
+  const result = await fetchClient.exponentialBackoff('https://abc3.com/', { method: 'GET' }, { maxRetries: 2, initialDelayInMillis: 100 })
+  expect(result.status).toBe(429)
+  expect(retrySpy).toHaveBeenCalledWith(100)
+  retrySpy.mockRestore()
+})
+
+test('exponentialBackoff falls back to exponential backoff when Retry-After header is not present', async () => {
+  const retrySpy = jest.spyOn(fetchClient, '__getRetryDelayWithRetryAfterHeader')
+  const retryDelaySpy = jest.spyOn(fetchClient, '__getRetryDelay')
+  fetchMock.mockResponse('503 Service Unavailable', {
+    status: 503,
+    headers: {}
+  })
+  const result = await fetchClient.exponentialBackoff('https://abc4.com/', { method: 'GET' }, { maxRetries: 2, initialDelayInMillis: 50 })
+  expect(result.status).toBe(503)
+  expect(retrySpy).toHaveBeenCalledWith(50)
+  expect(retryDelaySpy).toHaveBeenCalled()
+  retrySpy.mockRestore()
+  retryDelaySpy.mockRestore()
+})
+
+test('exponentialBackoff falls back to exponential backoff when Retry-After header is invalid', async () => {
+  const retrySpy = jest.spyOn(fetchClient, '__getRetryDelayWithRetryAfterHeader')
+  const retryDelaySpy = jest.spyOn(fetchClient, '__getRetryDelay')
+  fetchMock.mockResponse('503 Service Unavailable', {
+    status: 503,
+    headers: {
+      'Retry-After': 'invalid'
+    }
+  })
+  const result = await fetchClient.exponentialBackoff('https://abc5.com/', { method: 'GET' }, { maxRetries: 2, initialDelayInMillis: 50 })
+  expect(result.status).toBe(503)
+  expect(retrySpy).toHaveBeenCalledWith(50)
+  expect(retryDelaySpy).toHaveBeenCalled()
+  retrySpy.mockRestore()
+  retryDelaySpy.mockRestore()
 })
 
 test('exponential backoff with success in first attempt and custom retryOptions', async () => {

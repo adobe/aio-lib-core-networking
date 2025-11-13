@@ -12,10 +12,10 @@ governing permissions and limitations under the License.
 const DEFAULT_MAX_RETRIES = 3
 const DEFAULT_INITIAL_DELAY_MS = 100
 const loggerNamespace = '@adobe/aio-lib-core-networking:HttpExponentialBackoff'
-const logger = require('@adobe/aio-lib-core-logging')(loggerNamespace, { level: process.env.LOG_LEVEL })
+const coreLogging = require('@adobe/aio-lib-core-logging')
 const { createFetch, parseRetryAfterHeader } = require('./utils')
 
-/* global Request, Response, ProxyAuthOptions */ // for linter
+/* global Request, Response, ProxyOptions */ // for linter
 
 /**
  * Fetch Retry Options
@@ -23,7 +23,7 @@ const { createFetch, parseRetryAfterHeader } = require('./utils')
  * @typedef {object} RetryOptions
  * @property {number} maxRetries the maximum number of retries to try (default:3)
  * @property {number} initialDelayInMillis the initial delay in milliseconds (default:100ms)
- * @property {ProxyAuthOptions} proxy  the (optional) proxy auth options
+ * @property {ProxyOptions} proxy  the (optional) proxy auth options
  */
 
 /**
@@ -32,6 +32,17 @@ const { createFetch, parseRetryAfterHeader } = require('./utils')
  * with defaults set to max of 3 retries and initial Delay as 100ms
  */
 class HttpExponentialBackoff {
+  /**
+   * Creates an instance of HttpExponentialBackoff
+   *
+   * @param {object} [options] configuration options
+   * @param {string} [options.logLevel] the log level to use (default: process.env.LOG_LEVEL or 'info')
+   */
+  constructor (options = {}) {
+    this.logLevel = options.logLevel || process.env.LOG_LEVEL || 'info'
+    this.logger = coreLogging(loggerNamespace, { level: this.logLevel })
+  }
+
   /**
    * This function will retry connecting to a url end-point, with
    * exponential backoff. Returns a Promise.
@@ -102,10 +113,10 @@ class HttpExponentialBackoff {
     * @private
     */
   __getRetryOn (retries) {
-    return function (attempt, error, response) {
+    return (attempt, error, response) => {
       if (attempt < retries && (error !== null || (response.status > 499 && response.status < 600) || response.status === 429)) {
         const msg = `Retrying after attempt ${attempt + 1}. failed: ${error || response.statusText}`
-        logger.debug(msg)
+        this.logger.debug(msg)
         return true
       }
       return false
@@ -120,10 +131,10 @@ class HttpExponentialBackoff {
     * @private
     */
   __getRetryDelay (initialDelayInMillis) {
-    return function (attempt, error, response) {
+    return (attempt, error, response) => {
       const timeToWait = Math.pow(2, attempt) * initialDelayInMillis // 1000, 2000, 4000
       const msg = `Request will be retried after ${timeToWait} ms`
-      logger.debug(msg)
+      this.logger.debug(msg)
       return timeToWait
     }
   }
@@ -142,7 +153,7 @@ class HttpExponentialBackoff {
       const retryAfter = response?.headers.get('Retry-After') || null
       const timeToWait = parseRetryAfterHeader(retryAfter)
       if (!isNaN(timeToWait)) {
-        logger.debug(`Request will be retried after ${timeToWait} ms`)
+        this.logger.debug(`Request will be retried after ${timeToWait} ms`)
         return timeToWait
       }
       return this.__getRetryDelay(initialDelayInMillis)(attempt, error, response)
