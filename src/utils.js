@@ -15,29 +15,29 @@ const { getProxyForUrl } = require('proxy-from-env')
 const loggerNamespace = '@adobe/aio-lib-core-networking/utils'
 const logger = require('@adobe/aio-lib-core-logging')(loggerNamespace, { level: process.env.LOG_LEVEL })
 
-/* global ProxyAuthOptions */
+/* global ProxyOptions */
 
 /**
  * Return the appropriate Fetch function depending on proxy settings.
  *
- * @param {ProxyAuthOptions} [proxyAuthOptions] the proxy auth options
+ * @param {ProxyOptions} [proxyOptions] the proxy options
  * @returns {Function} the Fetch API function
  */
-function createFetch (proxyAuthOptions) {
+function createFetch (proxyOptions) {
   const fn = async (resource, options) => {
-    // proxyAuthOptions as a parameter will override any proxy env vars
-    if (!proxyAuthOptions) {
+    // proxyOptions as a parameter will override any proxy env vars
+    if (!proxyOptions) {
       const proxyUrl = getProxyForUrl(resource)
       if (proxyUrl) {
-        proxyAuthOptions = { proxyUrl }
+        proxyOptions = { proxyUrl }
       }
     }
 
-    if (proxyAuthOptions) {
-      logger.debug(`createFetch: proxy url found ${proxyAuthOptions.proxyUrl} for url ${resource}`)
+    if (proxyOptions) {
+      logger.debug(`createFetch: proxy url found ${proxyOptions.proxyUrl} for url ${resource}`)
       // in this closure: for fetch-retry, if we don't require it dynamically here, ProxyFetch will be an empty object
       const ProxyFetch = require('./ProxyFetch')
-      const proxyFetch = new ProxyFetch(proxyAuthOptions)
+      const proxyFetch = new ProxyFetch(proxyOptions)
       return proxyFetch.fetch(resource, options)
     } else {
       logger.debug('createFetch: proxy url not found, using plain fetch')

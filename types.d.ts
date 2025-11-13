@@ -7,15 +7,20 @@
 declare type RetryOptions = {
     maxRetries: number;
     initialDelayInMillis: number;
-    proxy: ProxyAuthOptions;
+    proxy: ProxyOptions;
 };
 
 /**
- * This class provides methods to implement fetch with retries.
- * The retries use exponential backoff strategy
- * with defaults set to max of 3 retries and initial Delay as 100ms
+ * Creates an instance of HttpExponentialBackoff
+ * @param [options] - configuration options
+ * @param [options.logLevel] - the log level to use (default: process.env.LOG_LEVEL or 'info')
+ * @param [options.logRetryAfterSeconds] - the number of seconds after which to log a warning if the Retry-After header is greater than the number of seconds. Set to 0 to disable.
  */
 declare class HttpExponentialBackoff {
+    constructor(options?: {
+        logLevel?: string;
+        logRetryAfterSeconds?: number;
+    });
     /**
      * This function will retry connecting to a url end-point, with
      * exponential backoff. Returns a Promise.
@@ -35,22 +40,24 @@ declare class HttpExponentialBackoff {
  * @property [username] - the username for basic auth
  * @property [password] - the password for basic auth
  * @property rejectUnauthorized - set to false to not reject unauthorized server certs
+ * @property [logLevel] - the log level to use (default: process.env.LOG_LEVEL or 'info')
  */
-declare type ProxyAuthOptions = {
+declare type ProxyOptions = {
     proxyUrl: string;
     username?: string;
     password?: string;
     rejectUnauthorized: boolean;
+    logLevel?: string;
 };
 
 /**
  * Initialize this class with Proxy auth options
- * @param proxyAuthOptions - the auth options to connect with
+ * @param proxyOptions - the auth options to connect with
  */
 declare class ProxyFetch {
-    constructor(proxyAuthOptions: ProxyAuthOptions);
+    constructor(proxyOptions: ProxyOptions);
     /**
-     * Fetch function, using the configured NTLM Auth options.
+     * Fetch function, using the configured fetch options, and proxy options (set in the constructor).
      * @param resource - the url or Request object to fetch from
      * @param options - the fetch options
      * @returns Promise object representing the http response
@@ -60,10 +67,10 @@ declare class ProxyFetch {
 
 /**
  * Return the appropriate Fetch function depending on proxy settings.
- * @param [proxyAuthOptions] - the proxy auth options
+ * @param [proxyOptions] - the proxy options
  * @returns the Fetch API function
  */
-declare function createFetch(proxyAuthOptions?: ProxyAuthOptions): (...params: any[]) => any;
+declare function createFetch(proxyOptions?: ProxyOptions): (...params: any[]) => any;
 
 /**
  * Parse the Retry-After header

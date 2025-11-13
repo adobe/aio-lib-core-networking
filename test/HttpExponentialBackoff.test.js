@@ -153,6 +153,53 @@ test('exponentialBackoff with 3 retries on errors with default retry strategy an
   const result = await fetchClient.exponentialBackoff('https://abc2.com/', { method: 'GET' }, { maxRetries: 2 })
   expect(result.status).toBe(503)
   expect(spy).toHaveBeenCalledTimes(2)
+  spy.mockRestore()
+})
+
+test('exponentialBackoff with 2 retries on errors with numeric Retry-After header', async () => {
+  const retrySpy = jest.spyOn(fetchClient, '__getRetryDelayWithRetryAfterHeader')
+  fetchMock.mockResponse('429 Too Many Requests', {
+    status: 429,
+    headers: {
+      'Retry-After': '5'
+    }
+  })
+  const result = await fetchClient.exponentialBackoff('https://abc3.com/', { method: 'GET' }, { maxRetries: 2, initialDelayInMillis: 100 })
+  expect(result.status).toBe(429)
+  expect(retrySpy).toHaveBeenCalledWith(100)
+  retrySpy.mockRestore()
+})
+
+test('exponentialBackoff falls back to exponential backoff when Retry-After header is not present', async () => {
+  const retrySpy = jest.spyOn(fetchClient, '__getRetryDelayWithRetryAfterHeader')
+  const retryDelaySpy = jest.spyOn(fetchClient, '__getRetryDelay')
+  fetchMock.mockResponse('503 Service Unavailable', {
+    status: 503,
+    headers: {}
+  })
+  const result = await fetchClient.exponentialBackoff('https://abc4.com/', { method: 'GET' }, { maxRetries: 2, initialDelayInMillis: 50 })
+  expect(result.status).toBe(503)
+  expect(retrySpy).toHaveBeenCalledWith(50)
+  expect(retryDelaySpy).toHaveBeenCalled()
+  retrySpy.mockRestore()
+  retryDelaySpy.mockRestore()
+})
+
+test('exponentialBackoff falls back to exponential backoff when Retry-After header is invalid', async () => {
+  const retrySpy = jest.spyOn(fetchClient, '__getRetryDelayWithRetryAfterHeader')
+  const retryDelaySpy = jest.spyOn(fetchClient, '__getRetryDelay')
+  fetchMock.mockResponse('503 Service Unavailable', {
+    status: 503,
+    headers: {
+      'Retry-After': 'invalid'
+    }
+  })
+  const result = await fetchClient.exponentialBackoff('https://abc5.com/', { method: 'GET' }, { maxRetries: 2, initialDelayInMillis: 50 })
+  expect(result.status).toBe(503)
+  expect(retrySpy).toHaveBeenCalledWith(50)
+  expect(retryDelaySpy).toHaveBeenCalled()
+  retrySpy.mockRestore()
+  retryDelaySpy.mockRestore()
 })
 
 test('exponential backoff with success in first attempt and custom retryOptions', async () => {
@@ -271,4 +318,46 @@ test('exponentialBackoff fetch throws', async () => {
   await expect(
     fetchClient.exponentialBackoff('https://abc1.com/', { method: 'GET' })
   ).rejects.toThrow('this is a fetch error, no response is defined')
+})
+
+test('exponentialBackoff with 2 retries logs warning when Retry-After exceeds logRetryAfterSeconds', async () => {
+  const fetchClientWithLogRetryAfter = new HttpExponentialBackoff({ logRetryAfterSeconds: 3 })
+  const warnSpy = jest.spyOn(fetchClientWithLogRetryAfter.logger, 'warn')
+  const debugSpy = jest.spyOn(fetchClientWithLogRetryAfter.logger, 'debug')
+
+  fetchMock.mockResponse('429 Too Many Requests', {
+    status: 429,
+    headers: {
+      'Retry-After': '5' // 5 seconds, which is > 3 seconds threshold
+    }
+  })
+
+  const result = await fetchClientWithLogRetryAfter.exponentialBackoff('https://abc6.com/', { method: 'GET' }, { maxRetries: 2, initialDelayInMillis: 100 })
+  expect(result.status).toBe(429)
+  expect(warnSpy).toHaveBeenCalledWith('Request will be retried after 5000 ms')
+  expect(debugSpy).not.toHaveBeenCalledWith('Request will be retried after 5000 ms')
+
+  warnSpy.mockRestore()
+  debugSpy.mockRestore()
+})
+
+test('exponentialBackoff with 2 retries logs debug when Retry-After is below logRetryAfterSeconds', async () => {
+  const fetchClientWithLogRetryAfter = new HttpExponentialBackoff({ logRetryAfterSeconds: 10 })
+  const warnSpy = jest.spyOn(fetchClientWithLogRetryAfter.logger, 'warn')
+  const debugSpy = jest.spyOn(fetchClientWithLogRetryAfter.logger, 'debug')
+
+  fetchMock.mockResponse('429 Too Many Requests', {
+    status: 429,
+    headers: {
+      'Retry-After': '5' // 5 seconds, which is < 10 seconds threshold
+    }
+  })
+
+  const result = await fetchClientWithLogRetryAfter.exponentialBackoff('https://abc7.com/', { method: 'GET' }, { maxRetries: 2, initialDelayInMillis: 100 })
+  expect(result.status).toBe(429)
+  expect(debugSpy).toHaveBeenCalledWith('Request will be retried after 5000 ms')
+  expect(warnSpy).not.toHaveBeenCalledWith('Request will be retried after 5000 ms')
+
+  warnSpy.mockRestore()
+  debugSpy.mockRestore()
 })
