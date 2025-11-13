@@ -46,6 +46,10 @@ class PatchedHttpsProxyAgent extends HttpsProxyAgent {
  * @returns {http.Agent} a http.Agent for basic auth proxy
  */
 function proxyAgent (resourceUrl, proxyAuthOptions) {
+  if (typeof resourceUrl !== 'string') {
+    throw new codes.ERROR_PROXY_FETCH_INITIALIZATION_TYPE({ sdkDetails: { resourceUrl }, messageValues: 'resourceUrl must be of type string' })
+  }
+
   const { proxyUrl, username, password, rejectUnauthorized = true } = proxyAuthOptions
   const proxyOpts = urlToHttpOptions(proxyUrl)
 

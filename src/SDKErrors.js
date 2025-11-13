@@ -49,3 +49,4 @@ module.exports = {
 
 // Define your error codes with the wrapper
 E('ERROR_PROXY_FETCH_INITIALIZATION', 'Proxy fetch initialization error(s). Missing arguments: %s')
+E('ERROR_PROXY_FETCH_INITIALIZATION_TYPE', 'Proxy fetch initialization error(s). Arguments are the wrong type: %s')

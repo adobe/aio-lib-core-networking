@@ -4,7 +4,7 @@
   "license": "Apache-2.0",
   "main": "src/index.js",
   "repository": "https://github.com/adobe/aio-lib-core-networking",
-  "version": "5.0.3",
+  "version": "5.0.4",
   "bugs": {
     "url": "https://github.com/adobe/aio-lib-core-networking/issues"
   },

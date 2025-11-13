@@ -78,6 +78,20 @@ describe('http proxy', () => {
       expect(response.ok).toEqual(false)
       expect(response.status).toEqual(502)
     })
+
+    test('failure due to passing URL object as resourceUrl', async () => {
+      // connect to non-existent server port
+      const testUrl = new URL(`${protocol}://localhost:${portNotInUse}/mirror/?foo=bar`)
+
+      const proxyUrl = proxyServer.url
+      const proxyFetch = new ProxyFetch({ proxyUrl, rejectUnauthorized: false })
+
+      const err = new codes.ERROR_PROXY_FETCH_INITIALIZATION_TYPE({
+        sdkDetails: {},
+        messageValues: 'resourceUrl must be of type string'
+      })
+      await expect(proxyFetch.fetch(testUrl)).rejects.toThrow(err)
+    })
   })
 
   describe('basic auth', () => {
