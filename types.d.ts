@@ -14,10 +14,12 @@ declare type RetryOptions = {
  * Creates an instance of HttpExponentialBackoff
  * @param [options] - configuration options
  * @param [options.logLevel] - the log level to use (default: process.env.LOG_LEVEL or 'info')
+ * @param [options.logRetryAfterSeconds] - the number of seconds after which to log a warning if the Retry-After header is greater than the number of seconds. Set to 0 to disable.
  */
 declare class HttpExponentialBackoff {
     constructor(options?: {
         logLevel?: string;
+        logRetryAfterSeconds?: number;
     });
     /**
      * This function will retry connecting to a url end-point, with
@@ -55,7 +57,7 @@ declare type ProxyOptions = {
 declare class ProxyFetch {
     constructor(proxyOptions: ProxyOptions);
     /**
-     * Fetch function, using the configured NTLM Auth options.
+     * Fetch function, using the configured fetch options, and proxy options (set in the constructor).
      * @param resource - the url or Request object to fetch from
      * @param options - the fetch options
      * @returns Promise object representing the http response

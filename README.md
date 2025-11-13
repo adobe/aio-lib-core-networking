@@ -134,6 +134,7 @@ Creates an instance of HttpExponentialBackoff
 | --- | --- | --- |
 | [options] | <code>object</code> | configuration options |
 | [options.logLevel] | <code>string</code> | the log level to use (default: process.env.LOG_LEVEL or 'info') |
+| [options.logRetryAfterSeconds] | <code>number</code> | the number of seconds after which to log a warning if the Retry-After header is greater than the number of seconds. Set to 0 to disable. |
 
 <a name="HttpExponentialBackoff+exponentialBackoff"></a>
 
@@ -176,7 +177,7 @@ Initialize this class with Proxy auth options
 <a name="ProxyFetch+fetch"></a>
 
 ### proxyFetch.fetch(resource, options) ⇒ <code>Promise.&lt;Response&gt;</code>
-Fetch function, using the configured NTLM Auth options.
+Fetch function, using the configured fetch options, and proxy options (set in the constructor).
 
 **Kind**: instance method of [<code>ProxyFetch</code>](#ProxyFetch)  
 **Returns**: <code>Promise.&lt;Response&gt;</code> - Promise object representing the http response  
