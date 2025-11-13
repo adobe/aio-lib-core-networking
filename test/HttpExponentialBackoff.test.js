@@ -319,3 +319,45 @@ test('exponentialBackoff fetch throws', async () => {
     fetchClient.exponentialBackoff('https://abc1.com/', { method: 'GET' })
   ).rejects.toThrow('this is a fetch error, no response is defined')
 })
+
+test('exponentialBackoff with 2 retries logs warning when Retry-After exceeds logRetryAfterSeconds', async () => {
+  const fetchClientWithLogRetryAfter = new HttpExponentialBackoff({ logRetryAfterSeconds: 3 })
+  const warnSpy = jest.spyOn(fetchClientWithLogRetryAfter.logger, 'warn')
+  const debugSpy = jest.spyOn(fetchClientWithLogRetryAfter.logger, 'debug')
+
+  fetchMock.mockResponse('429 Too Many Requests', {
+    status: 429,
+    headers: {
+      'Retry-After': '5' // 5 seconds, which is > 3 seconds threshold
+    }
+  })
+
+  const result = await fetchClientWithLogRetryAfter.exponentialBackoff('https://abc6.com/', { method: 'GET' }, { maxRetries: 2, initialDelayInMillis: 100 })
+  expect(result.status).toBe(429)
+  expect(warnSpy).toHaveBeenCalledWith('Request will be retried after 5000 ms')
+  expect(debugSpy).not.toHaveBeenCalledWith('Request will be retried after 5000 ms')
+
+  warnSpy.mockRestore()
+  debugSpy.mockRestore()
+})
+
+test('exponentialBackoff with 2 retries logs debug when Retry-After is below logRetryAfterSeconds', async () => {
+  const fetchClientWithLogRetryAfter = new HttpExponentialBackoff({ logRetryAfterSeconds: 10 })
+  const warnSpy = jest.spyOn(fetchClientWithLogRetryAfter.logger, 'warn')
+  const debugSpy = jest.spyOn(fetchClientWithLogRetryAfter.logger, 'debug')
+
+  fetchMock.mockResponse('429 Too Many Requests', {
+    status: 429,
+    headers: {
+      'Retry-After': '5' // 5 seconds, which is < 10 seconds threshold
+    }
+  })
+
+  const result = await fetchClientWithLogRetryAfter.exponentialBackoff('https://abc7.com/', { method: 'GET' }, { maxRetries: 2, initialDelayInMillis: 100 })
+  expect(result.status).toBe(429)
+  expect(debugSpy).toHaveBeenCalledWith('Request will be retried after 5000 ms')
+  expect(warnSpy).not.toHaveBeenCalledWith('Request will be retried after 5000 ms')
+
+  warnSpy.mockRestore()
+  debugSpy.mockRestore()
+})

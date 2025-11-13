@@ -37,10 +37,12 @@ class HttpExponentialBackoff {
    *
    * @param {object} [options] configuration options
    * @param {string} [options.logLevel] the log level to use (default: process.env.LOG_LEVEL or 'info')
+   * @param {number} [options.logRetryAfterSeconds] the number of seconds after which to log a warning if the Retry-After header is greater than the number of seconds. Set to 0 to disable.
    */
   constructor (options = {}) {
     this.logLevel = options.logLevel || process.env.LOG_LEVEL || 'info'
     this.logger = coreLogging(loggerNamespace, { level: this.logLevel })
+    this.logRetryAfterSeconds = options.logRetryAfterSeconds
   }
 
   /**
@@ -131,7 +133,7 @@ class HttpExponentialBackoff {
     * @private
     */
   __getRetryDelay (initialDelayInMillis) {
-    return (attempt, error, response) => {
+    return (attempt, _error, _response) => {
       const timeToWait = Math.pow(2, attempt) * initialDelayInMillis // 1000, 2000, 4000
       const msg = `Request will be retried after ${timeToWait} ms`
       this.logger.debug(msg)
@@ -151,10 +153,15 @@ class HttpExponentialBackoff {
   __getRetryDelayWithRetryAfterHeader (initialDelayInMillis) {
     return (attempt, error, response) => {
       const retryAfter = response?.headers.get('Retry-After') || null
-      const timeToWait = parseRetryAfterHeader(retryAfter)
-      if (!isNaN(timeToWait)) {
-        this.logger.debug(`Request will be retried after ${timeToWait} ms`)
-        return timeToWait
+      const timeToWaitMs = parseRetryAfterHeader(retryAfter)
+      if (!isNaN(timeToWaitMs)) {
+        const message = `Request will be retried after ${timeToWaitMs} ms`
+        if (this.logRetryAfterSeconds && timeToWaitMs > (this.logRetryAfterSeconds * 1000)) {
+          this.logger.warn(message)
+        } else {
+          this.logger.debug(message)
+        }
+        return timeToWaitMs
       }
       return this.__getRetryDelay(initialDelayInMillis)(attempt, error, response)
     }
