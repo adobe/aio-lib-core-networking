@@ -10,7 +10,7 @@ governing permissions and limitations under the License.
 */
 
 const loggerNamespace = '@adobe/aio-lib-core-networking:ProxyFetch'
-const logger = require('@adobe/aio-lib-core-logging')(loggerNamespace, { level: process.env.LOG_LEVEL })
+const coreLogging = require('@adobe/aio-lib-core-logging')
 const originalFetch = require('node-fetch')
 const { codes } = require('./SDKErrors')
 const { HttpProxyAgent } = require('http-proxy-agent')
@@ -42,42 +42,44 @@ class PatchedHttpsProxyAgent extends HttpsProxyAgent {
  * @private
  *
  * @param {string} resourceUrl an endpoint url for proxyAgent selection
- * @param {ProxyAuthOptions} proxyOptions an object which contains auth information
+ * @param {ProxyOptions} proxyOptions an object which contains proxy information
+ * @param {object} logger the logger instance
  * @returns {http.Agent} a http.Agent for basic auth proxy
  */
-function proxyAgent (resourceUrl, proxyAuthOptions) {
+function proxyAgent (resourceUrl, proxyOptions, logger) {
   if (typeof resourceUrl !== 'string') {
     throw new codes.ERROR_PROXY_FETCH_INITIALIZATION_TYPE({ sdkDetails: { resourceUrl }, messageValues: 'resourceUrl must be of type string' })
   }
 
-  const { proxyUrl, username, password, rejectUnauthorized = true } = proxyAuthOptions
-  const proxyOpts = urlToHttpOptions(proxyUrl)
+  const { proxyUrl, username, password, rejectUnauthorized = true } = proxyOptions
+  const proxyHttpOptions = urlToHttpOptions(proxyUrl)
 
-  if (!proxyOpts.auth && username && password) {
+  if (!proxyHttpOptions.auth && username && password) {
     logger.debug('username and password not set in proxy url, using credentials passed in the constructor.')
-    proxyOpts.auth = `${username}:${password}`
+    proxyHttpOptions.auth = `${username}:${password}`
   }
 
-  proxyOpts.rejectUnauthorized = rejectUnauthorized
+  proxyHttpOptions.rejectUnauthorized = rejectUnauthorized
   if (rejectUnauthorized === false) {
     logger.warn(`proxyAgent - rejectUnauthorized is set to ${rejectUnauthorized}`)
   }
 
   if (resourceUrl.startsWith('https')) {
-    return new PatchedHttpsProxyAgent(proxyUrl, proxyOpts)
+    return new PatchedHttpsProxyAgent(proxyUrl, proxyHttpOptions)
   } else {
-    return new HttpProxyAgent(proxyUrl, proxyOpts)
+    return new HttpProxyAgent(proxyUrl, proxyHttpOptions)
   }
 }
 
 /**
  * Proxy Auth Options
  *
- * @typedef {object} ProxyAuthOptions
+ * @typedef {object} ProxyOptions
  * @property {string} proxyUrl - the proxy's url
  * @property {string} [username] the username for basic auth
  * @property {string} [password] the password for basic auth
  * @property {boolean} rejectUnauthorized - set to false to not reject unauthorized server certs
+ * @property {string} [logLevel] the log level to use (default: process.env.LOG_LEVEL or 'info')
  */
 
 /**
@@ -87,11 +89,14 @@ class ProxyFetch {
   /**
    * Initialize this class with Proxy auth options
    *
-   * @param {ProxyAuthOptions} proxyAuthOptions the auth options to connect with
+   * @param {ProxyOptions} proxyOptions the auth options to connect with
    */
-  constructor (proxyAuthOptions = {}) {
-    logger.debug(`constructor - authOptions: ${JSON.stringify(proxyAuthOptions)}`)
-    const { proxyUrl } = proxyAuthOptions
+  constructor (proxyOptions = {}) {
+    this.logLevel = proxyOptions.logLevel || process.env.LOG_LEVEL || 'info'
+    this.logger = coreLogging(loggerNamespace, { level: this.logLevel })
+
+    this.logger.debug(`constructor - authOptions: ${JSON.stringify(proxyOptions)}`)
+    const { proxyUrl } = proxyOptions
     const { auth } = urlToHttpOptions(proxyUrl)
 
     if (!proxyUrl) {
@@ -100,15 +105,15 @@ class ProxyFetch {
     }
 
     if (!auth) {
-      logger.debug('constructor: username or password not set, proxy is anonymous.')
+      this.logger.debug('constructor: username or password not set, proxy is anonymous.')
     }
 
-    this.authOptions = proxyAuthOptions
+    this.proxyOptions = proxyOptions
     return this
   }
 
   /**
-   * Fetch function, using the configured NTLM Auth options.
+   * Fetch function, using the configured fetch options, and proxy options (set in the constructor).
    *
    * @param {string | Request} resource - the url or Request object to fetch from
    * @param {object} options - the fetch options
@@ -117,7 +122,7 @@ class ProxyFetch {
   async fetch (resource, options = {}) {
     return originalFetch(resource, {
       ...options,
-      agent: proxyAgent(resource, this.authOptions)
+      agent: proxyAgent(resource, this.proxyOptions, this.logger)
     })
   }
 }
